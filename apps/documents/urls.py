@@ -7,4 +7,5 @@ app_name = 'documents'
 urlpatterns = [
     path('', views.index, name='index'),
     path('organizations/', views.organizations, name='organizations'),
+    path('events/', views.events, name='events'),
 ]

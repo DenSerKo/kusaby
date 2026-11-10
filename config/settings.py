@@ -134,3 +134,5 @@ MAILERS = {
 }
 
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
+SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
+SABY_API_AUTH_ENDPOINT = '/auth/service/'

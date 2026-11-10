@@ -63,6 +63,28 @@ class BaseClient:
             return None
         return response.json()
 
+    async def jsonrpc(
+            self,
+            endpoint: str,
+            method: str,
+            params: dict,
+            request_id: int = 0
+    ) -> dict:
+        response = await self.post(
+            endpoint,
+            json={
+                "jsonrpc": "2.0",
+                "method": method,
+                "params": params,
+                "id": request_id,
+            },
+        )
+
+        if not isinstance(response, dict):
+            raise ValueError("Ожидался объект в ответе JSON-RPC")
+
+        return response
+
     async def get(self, endpoint: str, *, params: dict | None = None, **kwargs: Any):
         return await self._request("GET", endpoint, params=params, **kwargs)
 

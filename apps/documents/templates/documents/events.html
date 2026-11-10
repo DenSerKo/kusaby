@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}
+	Список изменений
+{% endblock %}
+{% block main %}
+	<h1>Список изменений</h1>
+    <ul>
+        {% for event in events %}
+            <li>{{ event }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
