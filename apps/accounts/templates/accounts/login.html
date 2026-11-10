@@ -16,15 +16,15 @@
   <input type="hidden" name="next" value="{{ next }}">
 
   <div>
-    <label>Логин</label>
-    <input type="text" name="username" required>
+    <label for="username">Логин</label>
+    <input id="username" type="text" name="username" required>
   </div>
 
   <div>
-    <label>Пароль</label>
-    <input type="password" name="password" required>
+    <label for="password">Пароль</label>
+    <input id="password" type="password" name="password" required>
   </div>
 
-  <button type="submit">Войти</button>
+  <button type="submit">Авторизоваться через Saby</button>
 </form>
 {% endblock %}

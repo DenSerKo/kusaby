@@ -1,6 +1,7 @@
 <nav>
     <a href="{% url 'core:index' %}">Главная</a>
     <a href="{% url 'documents:index' %}">Документы</a>
+    <a href="{% url 'documents:organizations' %}">Организации</a>
 
     {% if request.session.saby_token %}
         <form method="post" action="{% url 'accounts:logout' %}">

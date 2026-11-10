@@ -19,6 +19,7 @@ class BaseClient:
         self.headers = headers.copy() if headers else {}
         if self.token:
             self.headers["X-SBISSessionID"] = self.token
+        self.headers["Content-Type"] = "application/json; charset=utf-8"
 
         self._client: httpx.AsyncClient | None = None
 
@@ -46,7 +47,7 @@ class BaseClient:
         **kwargs: Any,
     ) -> dict[str, Any] | list[Any] | None:
         if self._client is None:
-            raise RuntimeError("Client must be used with 'async with'")
+            raise RuntimeError("Используйте API клиент внутри 'async with'")
 
         response = await self._client.request(
             method,

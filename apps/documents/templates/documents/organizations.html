@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}
+	Организации
+{% endblock %}
+{% block main %}
+	<h1>Организации</h1>
+    <ul>
+        {% for organization in organizations %}
+            <li>{{ organization }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
