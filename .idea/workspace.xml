@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="b6912101-a942-4f58-9897-d29b7dbbeae1" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/kusaby.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/admin.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/apps.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/client.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/decorators.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/migrations/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/models.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/templates/accounts/login.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/tests.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/accounts/views.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/admin.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/apps.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/migrations/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/models.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/templates/core/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/tests.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/core/views.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/admin.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/apps.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/migrations/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/models.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/templates/documents/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/tests.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/documents/views.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/clients/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/clients/base.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/asgi.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/settings.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/wsgi.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/manage.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/partials/_nav.html" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" module-name="kusaby" is-module-sdk="true">
+    <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
+    <option name="myUseModuleSdk" value="true" />
+    <option name="myModuleName" value="kusaby" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3LuYYRqIPmBpXv7tFEmuD5v8WLM" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Django Server.kusaby.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;django.template.preview.state&quot;: &quot;SHOW_EDITOR&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Алёна/PycharmProjects/kusaby/apps/documents&quot;,
+    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;python.packages.toolwindow.project.migrated.to.right.top.v2&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.python.django.customization.DjangoModulesConfigurable&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Алёна\PycharmProjects\kusaby\apps\documents" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Алёна\PycharmProjects\kusaby\apps" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="kusaby" type="Python.DjangoServer" factoryName="Django server">
+      <module name="kusaby" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="DJANGO_SETTINGS_MODULE" value="config.settings" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <option name="port" value="8000" />
+      <option name="host" value="" />
+      <option name="additionalOptions" value="" />
+      <option name="browserUrl" value="" />
+      <option name="runTestServer" value="false" />
+      <option name="runNoReload" value="false" />
+      <option name="useCustomRunCommand" value="false" />
+      <option name="customRunCommand" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-PY-262.10968.92" />
+        <option value="bundled-python-sdk-73a66231627c-5bd6d13a2a75-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-262.10968.92" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b6912101-a942-4f58-9897-d29b7dbbeae1" name="Changes" comment="" />
+      <created>1794305471582</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1794305471582</updated>
+      <workItem from="1794305472107" duration="6682000" />
+      <workItem from="1794313695204" duration="1661000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
