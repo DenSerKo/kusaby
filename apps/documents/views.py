@@ -24,3 +24,6 @@ def organizations(request):
     return render(request,
                   'documents/organizations.html',
                   {'organizations': organizations})
+
+
+# git test
