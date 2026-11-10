@@ -1,70 +1,68 @@
-from urllib.parse import urlparse
+import httpx
+from asgiref.sync import async_to_sync
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 
-from asgiref.sync import sync_to_async
-from django.shortcuts import render, redirect
-from django.views import View
-
-from .client import AuthClient
-
-
-def is_safe_url(url: str, host: str) -> bool:
-    if not url:
-        return False
-    parsed = urlparse(url)
-    return not parsed.netloc or parsed.netloc == host
+from .services import login_to_saby, logout_from_saby
 
 
-class LoginView(View):
-    template_name = "accounts/login.html"
+def login_view(request):
+    if request.session.get("saby_token"):
+        return redirect("core:index")
 
-    async def get(self, request):
-        token = await sync_to_async(request.session.get)("X-SBISSessionID")
-        if token:
-            return redirect("/")
+    next_url = request.POST.get("next") or request.GET.get("next") or "/"
 
-        next_url = request.GET.get("next", "/")
-        return await sync_to_async(render)(request, self.template_name, {"next": next_url})
+    if request.method == "GET":
+        return render(request, "accounts/login.html", {"next": next_url})
 
-    async def post(self, request):
-        username = request.POST.get("username", "").strip()
-        password = request.POST.get("password", "")
-        next_url = request.POST.get("next") or "/"
-
-        if not username or not password:
-            return await sync_to_async(render)(request, self.template_name, {"next": next_url})
-
-        try:
-            async with AuthClient() as client:
-                data = await client.login(username, password)
-        except Exception:
-            return await sync_to_async(render)(request, self.template_name, {"next": next_url})
-
-        token = data.get("result") if data else None
-        if not token:
-            return await sync_to_async(render)(request, self.template_name, {"next": next_url})
-
-        # Сохраняем в сессию
-        await sync_to_async(request.session.__setitem__)("X-SBISSessionID", token)
-        await sync_to_async(request.session.save)()
-
-        if is_safe_url(next_url, request.get_host()):
-            return redirect(next_url)
-        return redirect("/")
-
-
-class LogoutView(View):
-    async def post(self, request):
-        token = await sync_to_async(request.session.get)("X-SBISSessionID")
-
-        if token:
-            try:
-                async with AuthClient(token=token) as client:
-                    await client.logout()
-            except Exception:
-                pass
-
-        await sync_to_async(request.session.flush)()
+    if request.method != "POST":
         return redirect("accounts:login")
 
-    async def get(self, request):
-        return await self.post(request)
+    username = request.POST.get("username", "").strip()
+    password = request.POST.get("password", "")
+
+    if not username or not password:
+        messages.error(request, "Введите логин и пароль")
+        return render(request, "accounts/login.html", {"next": next_url})
+
+    try:
+        data = async_to_sync(login_to_saby)(username, password)
+    except (httpx.HTTPError, ValueError):
+        messages.error(request, "Не удалось выполнить запрос к СБИС. Попробуйте позже.")
+        return render(request, "accounts/login.html", {"next": next_url})
+
+    token = data.get("result") if isinstance(data, dict) else None
+    if not isinstance(token, str) or not token:
+        messages.error(request, "СБИС не подтвердил авторизацию. Проверьте логин и пароль.")
+        return render(request, "accounts/login.html", {"next": next_url})
+
+    # Меняем ключ сессии после успешной авторизации.
+    request.session.cycle_key()
+    request.session["saby_token"] = token
+
+    if url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
+
+    return redirect("core:index")
+
+
+def logout_view(request):
+    if request.method != "POST":
+        return redirect("core:index")
+
+    token = request.session.get("saby_token")
+
+    if token:
+        try:
+            async_to_sync(logout_from_saby)(token)
+        except (httpx.HTTPError, ValueError):
+            # Локальную сессию завершаем, даже если API СБИС недоступно.
+            pass
+
+    request.session.flush()
+    return redirect("accounts:login")
