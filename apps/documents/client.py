@@ -17,3 +17,10 @@ class DocumentsClient(BaseClient):
             "СБИС.СписокИзменений",
             params
         )
+
+    async def prepare_action(self, params: dict) -> dict:
+        return await self.jsonrpc(
+            settings.SABY_API_SERVICE_ENDPOINT,
+            "СБИС.ПодготовитьДействие",
+            params
+        )

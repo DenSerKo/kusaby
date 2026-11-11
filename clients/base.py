@@ -12,14 +12,21 @@ class BaseClient:
         headers: dict[str, str] | None = None,
         timeout: float = 30.0,
     ):
-        self.base_url = base_url or getattr(settings, "SABY_API_BASE_URL", "")
+        self.base_url = (
+            base_url
+            if base_url is not None
+            else settings.SABY_API_BASE_URL
+        )
         self.token = token
         self.timeout = timeout
 
         self.headers = headers.copy() if headers else {}
         if self.token:
             self.headers["X-SBISSessionID"] = self.token
-        self.headers["Content-Type"] = "application/json; charset=utf-8"
+        self.headers.setdefault(
+            "Content-Type",
+            "application/json; charset=utf-8",
+        )
 
         self._client: httpx.AsyncClient | None = None
 

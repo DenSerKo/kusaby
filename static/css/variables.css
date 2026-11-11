@@ -1,3 +1,15 @@
 :root {
     --font-family: "Segoe UI", system-ui;
+
+    --font-size-sm: 0.85rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.25rem;
+
+    /* Насыщенность */
+    --weight-normal: 400;
+    --weight-bold: 700;
+
+    /* Цвета */
+    --color-main: #333333;
+    --color-muted: #666666;
 }

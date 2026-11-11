@@ -4,31 +4,25 @@ from clients.base import BaseClient
 
 
 class AuthClient(BaseClient):
+
     async def login(self, username: str, password: str) -> dict:
-        return await self.post(
+        return await self.jsonrpc(
             settings.SABY_API_AUTH_ENDPOINT,
-            json={
-                'jsonrpc': '2.0',
-                'method': 'СБИС.Аутентифицировать',
-                'params': {
-                    'Параметр': {
-                        'Логин': username,
-                        'Пароль': password
-                    }
-                },
-                'id': 0
+            "СБИС.Аутентифицировать",
+            {
+                "Параметр": {
+                    "Логин": username,
+                    "Пароль": password,
+                }
             },
         )
 
-    async def logout(self) -> None:
+    async def logout(self) -> dict:
         if not self.token:
-            return
-        await self.post(
+            return {}
+
+        return await self.jsonrpc(
             settings.SABY_API_AUTH_ENDPOINT,
-            json={
-                'jsonrpc': '2.0',
-                'method': 'СБИС.Выход',
-                'params': {},
-                'id': 0
-            },
+            "СБИС.Выход",
+            {},
         )

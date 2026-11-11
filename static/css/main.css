@@ -1,7 +1,16 @@
 @import "nav.css";
 @import "variables.css";
+@import "utils.css";
 
 
 body {
     font-family: var(--font-family), sans-serif;
+}
+
+.event {
+    display: flex;
+    gap: 2rem;
+    & > .document {
+        flex: 1;
+    }
 }

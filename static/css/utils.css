@@ -1,0 +1,9 @@
+.text-important {
+  font-size: var(--font-size-lg);
+  font-weight: var(--weight-bold);
+}
+
+.text-muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
