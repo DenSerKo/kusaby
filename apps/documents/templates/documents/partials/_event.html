@@ -6,12 +6,9 @@
     <div class="document">
         <p class="text-important">{{ event.counterparty.name }}</p>
         <p class="text-muted">{{ event.name }}</p>
-        <ul>
-            {% for event_item in event.events %}
-            	{{ event_item }}
-            {% endfor %}
-
-        </ul>
+        {% for event_item in event.events %}
+            <p class="text-muted">{{ event_item }}</p>
+        {% endfor %}
     </div>
     <div class="amount">
         <p class="text-important">{{ event.amount }}</p>

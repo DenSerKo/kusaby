@@ -4,9 +4,16 @@
 {% endblock %}
 {% block main %}
 	<h1>Список изменений</h1>
-    <ul>
-        {% for event in events %}
-            {% include 'documents/partials/_event.html' with event=event %}
-        {% endfor %}
-    </ul>
+    <form
+        hx-post="{% url 'documents:events' %}"
+        hx-trigger="change from:#from-datetime, submit"
+        hx-target="#events"
+    >
+        {% csrf_token %}
+        <label for="from-datetime">Начало периода</label>
+        <input type="datetime-local" name="from_datetime" id="from-datetime">
+    </form>
+    <section id="events">
+        {% include 'documents/partials/_events.html' %}
+    </section>
 {% endblock %}

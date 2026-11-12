@@ -1,0 +1,19 @@
+{% for event in events %}
+    {% include 'documents/partials/_event.html' with event=event %}
+{% endfor %}
+
+{% if has_more %}
+    <form
+        hx-trigger="revealed"
+        hx-post="{% url 'documents:events' %}"
+        hx-swap="outerHTML"
+    >
+        {% csrf_token %}
+        <input
+            type="hidden"
+            name="last_event_id"
+            value="{{ last_event_id }}"
+        >
+        <p>Загрузка...</p>
+    </form>
+{% endif %}

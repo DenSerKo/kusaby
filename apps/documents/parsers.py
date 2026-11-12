@@ -110,3 +110,32 @@ def parse_datetime(value: str | None) -> datetime | None:
         return None
 
     return datetime.strptime(value, "%d.%m.%Y %H.%M.%S")
+
+
+def filter_documents_by_event_name(
+    documents: list[dict[str, Any]],
+    event_name: str,
+) -> list[dict[str, Any]]:
+
+    return [
+        document
+        for document in documents
+        if any(
+            event.get("name") == event_name
+            for event in document.get("events", [])
+        )
+    ]
+
+def filter_documents_by_event_action_name(
+    documents: list[dict[str, Any]],
+    event_action_name: str,
+) -> list[dict[str, Any]]:
+
+    return [
+        document
+        for document in documents
+        if any(
+            event.get("action", []).get("Название") == event_action_name
+            for event in document.get("events", [])
+        )
+    ]

@@ -1,7 +1,25 @@
 from typing import Any
 
 from .client import DocumentsClient
-from .parsers import parse_document, parse_document_details
+from .filters import EventsFilter
+from .parsers import parse_document, parse_document_details, filter_documents_by_event_name, \
+    filter_documents_by_event_action_name
+
+
+def _build_events_params(filters: EventsFilter) -> dict:
+    api_filter = {
+        "Тип": "ДокОтгрВх",
+        "Навигация": {
+            "РазмерСтраницы": 50,
+        },
+    }
+
+    if filters.last_event_id:
+        api_filter["ИдентификаторСобытия"] = filters.last_event_id
+    elif filters.from_datetime:
+        api_filter["ДатаВремяС"] = filters.from_datetime
+
+    return {"Фильтр": api_filter}
 
 
 async def get_organizations(
@@ -12,20 +30,42 @@ async def get_organizations(
         result = await client.get_organizations(params)
         return result['result']['НашаОрганизация']
 
-async def get_events(token: str, params: dict) -> list[dict]:
+async def get_events(
+        token: str,
+        filters: EventsFilter) -> dict[str, Any]:
+    params = _build_events_params(filters)
     async with DocumentsClient(token=token) as client:
         response = await client.get_events(params)
 
-    documents = response.get("result", {}).get("Документ", [])
+    result = response.get("result", {})
+    raw_documents = result.get("Документ", [])
 
-    if isinstance(documents, dict):
-        documents = [documents]
+    has_more = result.get('Навигация', {}).get('ЕстьЕще', 'Нет') == 'Да'
 
-    return [
+    if isinstance(raw_documents, dict):
+        raw_documents = [raw_documents]
+
+    documents = [
         parse_document_details(document)
-        for document in documents
+        for document in raw_documents
         if isinstance(document, dict)
     ]
+
+    last_event_id = None
+    last_event = documents[-1].get('events', [])
+    if last_event:
+        last_event_id = last_event[-1].get('id')
+
+    documents =  filter_documents_by_event_action_name(
+        documents,
+        "Утверждение"
+    )
+
+    return {
+        'events': documents,
+        'has_more': has_more,
+        'last_event_id': last_event_id,
+    }
 
 async def prepare_action(
     token: str,
