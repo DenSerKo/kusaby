@@ -75,12 +75,15 @@ def parse_signature(
     }
 
 def parse_event(event: dict[str, Any]) -> dict[str, Any]:
+    action = event.get("Действие") or {}
+
     return {
         "id": event.get("Идентификатор"),
         "name": event.get("Название"),
         "date": event.get("ДатаВремя"),
         "state": event.get("Состояние") or {},
-        "action": event.get("Действие") or {},
+        "action": action,
+        "action_name": action.get("Название"),
         "attachments": [
             parse_attachment(attachment)
             for attachment in event.get("Вложение", [])
