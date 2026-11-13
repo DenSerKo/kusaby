@@ -5,7 +5,7 @@ import httpx
 from asgiref.sync import async_to_sync
 from django.shortcuts import render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.decorators import api_login_required
 from apps.documents.filters import EventsFilter
@@ -59,11 +59,9 @@ def organizations(request):
 
 
 @api_login_required
+@require_GET
 def events(request):
-    # Фильтр передаётся через query string для GET и через POST
-    # при htmx-пагинации/совместимых POST-запросах.
-    params = request.GET if request.method == "GET" else request.POST
-    value = params.get("from_datetime")
+    value = request.GET.get("from_datetime")
 
     try:
         if value:
@@ -82,16 +80,15 @@ def events(request):
         }
         template = (
             "documents/partials/_events.html"
-            if request.method == "POST"
+            if request.headers.get("HX-Request-Type") == "partial"
             else "documents/events.html"
         )
         return render(request, template, context, status=400)
 
-    # Передаём значение обратно в input, чтобы состояние формы
-    # соответствовало фильтру, использованному в запросе.
+    # Сохраняем значение фильтра для input и для последующих страниц.
     from_datetime = timezone.localtime(start).strftime("%Y-%m-%dT%H:%M")
 
-    event_id = request.POST.get("last_event_id")
+    event_id = request.GET.get("last_event_id")
     filters = (
         EventsFilter(last_event_id=event_id)
         if event_id
@@ -128,10 +125,11 @@ def events(request):
     }
     template = (
         "documents/partials/_events.html"
-        if request.method == "POST"
+        if request.headers.get("HX-Request-Type") == "partial"
         else "documents/events.html"
     )
     return render(request, template, context, status=status)
+
 
 @api_login_required
 @require_POST
