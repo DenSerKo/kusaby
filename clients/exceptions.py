@@ -1,5 +1,8 @@
+from typing import Any
+
+
 class SabyAPIError(Exception):
-    """Ошибка, возвращённая API СБИС."""
+    """Ошибка, возвращённая API СБИС в JSON-RPC ответе."""
 
     def __init__(
         self,
@@ -7,7 +10,7 @@ class SabyAPIError(Exception):
         code: int | str | None = None,
         details: str | None = None,
         error_type: str | None = None,
-        data=None,
+        data: Any = None,
         http_status: int | None = None,
         method: str | None = None,
     ):
@@ -24,5 +27,3 @@ class SabyAPIError(Exception):
 
 class SabyResponseError(Exception):
     """СБИС вернул ответ, который приложение не смогло обработать."""
-
-    pass
