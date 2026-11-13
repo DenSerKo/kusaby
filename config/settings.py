@@ -136,3 +136,19 @@ MAILERS = {
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
 SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
 SABY_API_AUTH_ENDPOINT = '/auth/service/'
+
+
+# Logs are written to stdout/stderr and collected by the deployment platform.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
