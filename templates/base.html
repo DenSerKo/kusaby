@@ -3,8 +3,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="shortcut icon" href="{% static 'img/favicon.svg' %}" type="image/svg">
@@ -14,10 +13,15 @@
 </head>
 <body>
     {% include 'partials/_nav.html' %}
+    <div id="notifications" aria-live="polite">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="notification notification--{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
     <main>
-        {% block main %}
-
-        {% endblock %}
+        {% block main %}{% endblock %}
     </main>
 </body>
 </html>
