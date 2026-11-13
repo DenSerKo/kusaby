@@ -53,6 +53,9 @@ def parse_party(party: dict[str, Any] | None) -> dict[str, Any]:
         "patronymic": patronymic,
         "snils": snils,
         "country_code": country_code,
+        "private_person": individual.get("ЧастноеЛицо"),
+        "external_id": party.get("ИдентификаторИС"),
+        "description": party.get("Описание"),
         "email": party.get("Email"),
         "phone": party.get("Телефон"),
     }
