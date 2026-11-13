@@ -1,12 +1,18 @@
 {% extends 'base.html' %}
-{% block title %}
-	Организации
-{% endblock %}
+{% block title %}Организации{% endblock %}
 {% block main %}
-	<h1>Организации</h1>
+    <h1>Организации</h1>
+    {% if error_message %}
+        <div class="notification notification--error" role="alert">
+            <strong>Ошибка:</strong> {{ error_message }}
+            {% if error_details %}<p>{{ error_details }}</p>{% endif %}
+        </div>
+    {% endif %}
     <ul>
         {% for organization in organizations %}
             <li>{{ organization }}</li>
+        {% empty %}
+            {% if not error_message %}<li>Организации не найдены.</li>{% endif %}
         {% endfor %}
     </ul>
 {% endblock %}
