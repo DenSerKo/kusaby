@@ -62,7 +62,8 @@ async def get_events(
     elif not isinstance(raw_documents, list):
         raw_documents = []
 
-    has_more = result.get("Навигация", {}).get("ЕстьЕще", "Нет") == "Да"
+    navigation = result.get("Навигация") or {}
+    has_more = navigation.get("ЕстьЕще", "Нет") == "Да"
 
     documents = [
         parse_document_details(document)
