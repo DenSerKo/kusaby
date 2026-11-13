@@ -7,7 +7,7 @@
         <p class="text-important">{{ event.counterparty.name }}</p>
         <p class="text-muted">{{ event.name }}</p>
         {% for event_item in event.events %}
-            <p class="text-muted">{{ event_item.name }}{% if event_item.action.Название %} — {{ event_item.action.Название }}{% endif %}</p>
+            <p class="text-muted">{{ event_item.name }}{% if event_item.action_name %} — {{ event_item.action_name }}{% endif %}</p>
         {% endfor %}
     </div>
     <div class="amount"><p class="text-important">{{ event.amount }}</p></div>
