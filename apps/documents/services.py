@@ -2,8 +2,10 @@ from typing import Any
 
 from .client import DocumentsClient
 from .filters import EventsFilter
-from .parsers import parse_document, parse_document_details, filter_documents_by_event_name, \
-    filter_documents_by_event_action_name
+from .parsers import (
+    filter_documents_by_event_action_name,
+    parse_document_details,
+)
 
 
 def _build_events_params(filters: EventsFilter) -> dict:
@@ -27,23 +29,40 @@ async def get_organizations(
     params: dict,
 ) -> list[dict[str, Any]]:
     async with DocumentsClient(token=token) as client:
-        result = await client.get_organizations(params)
-        return result['result']['НашаОрганизация']
+        response = await client.get_organizations(params)
+
+    result = response.get("result", {})
+    organizations = result.get("НашаОрганизация", [])
+
+    if isinstance(organizations, dict):
+        organizations = [organizations]
+
+    if not isinstance(organizations, list):
+        return []
+
+    return organizations
+
 
 async def get_events(
-        token: str,
-        filters: EventsFilter) -> dict[str, Any]:
+    token: str,
+    filters: EventsFilter,
+) -> dict[str, Any]:
     params = _build_events_params(filters)
+
     async with DocumentsClient(token=token) as client:
         response = await client.get_events(params)
 
     result = response.get("result", {})
+    if not isinstance(result, dict):
+        result = {}
+
     raw_documents = result.get("Документ", [])
-
-    has_more = result.get('Навигация', {}).get('ЕстьЕще', 'Нет') == 'Да'
-
     if isinstance(raw_documents, dict):
         raw_documents = [raw_documents]
+    elif not isinstance(raw_documents, list):
+        raw_documents = []
+
+    has_more = result.get("Навигация", {}).get("ЕстьЕще", "Нет") == "Да"
 
     documents = [
         parse_document_details(document)
@@ -52,25 +71,35 @@ async def get_events(
     ]
 
     last_event_id = None
-    last_event = documents[-1].get('events', [])
-    if last_event:
-        last_event_id = last_event[-1].get('id')
+    if documents:
+        last_events = documents[-1].get("events", [])
+        if last_events:
+            last_event_id = last_events[-1].get("id")
 
-    documents =  filter_documents_by_event_action_name(
+    documents = filter_documents_by_event_action_name(
         documents,
-        "Утверждение"
+        "Утверждение",
     )
 
     return {
-        'events': documents,
-        'has_more': has_more,
-        'last_event_id': last_event_id,
+        "events": documents,
+        "has_more": has_more,
+        "last_event_id": last_event_id,
     }
+
 
 async def prepare_action(
     token: str,
     params: dict,
 ) -> list[dict[str, Any]]:
     async with DocumentsClient(token=token) as client:
-        result = await client.prepare_action(params)
-        return result['result']
+        response = await client.prepare_action(params)
+
+    result = response.get("result", [])
+    if isinstance(result, dict):
+        result = [result]
+
+    if not isinstance(result, list):
+        return []
+
+    return result
