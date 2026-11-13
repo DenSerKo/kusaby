@@ -14,22 +14,13 @@ class BaseClient:
         headers: dict[str, str] | None = None,
         timeout: float = 30.0,
     ):
-        self.base_url = (
-            base_url
-            if base_url is not None
-            else settings.SABY_API_BASE_URL
-        )
+        self.base_url = base_url if base_url is not None else settings.SABY_API_BASE_URL
         self.token = token
         self.timeout = timeout
-
         self.headers = headers.copy() if headers else {}
         if self.token:
             self.headers["X-SBISSessionID"] = self.token
-        self.headers.setdefault(
-            "Content-Type",
-            "application/json; charset=utf-8",
-        )
-
+        self.headers.setdefault("Content-Type", "application/json; charset=utf-8")
         self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self):
@@ -59,12 +50,7 @@ class BaseClient:
             raise RuntimeError("Используйте API клиент внутри 'async with'")
 
         return await self._client.request(
-            method,
-            endpoint,
-            params=params,
-            json=json,
-            data=data,
-            **kwargs,
+            method, endpoint, params=params, json=json, data=data, **kwargs
         )
 
     async def _request(
@@ -78,18 +64,11 @@ class BaseClient:
         **kwargs: Any,
     ) -> dict[str, Any] | list[Any] | None:
         response = await self._request_response(
-            method,
-            endpoint,
-            params=params,
-            json=json,
-            data=data,
-            **kwargs,
+            method, endpoint, params=params, json=json, data=data, **kwargs
         )
         response.raise_for_status()
-
         if response.status_code == 204 or not response.content:
             return None
-
         return response.json()
 
     async def jsonrpc(
@@ -99,43 +78,31 @@ class BaseClient:
         params: dict,
         request_id: int = 0,
     ) -> dict[str, Any]:
-        payload = {
-            "jsonrpc": "2.0",
-            "method": method,
-            "params": params,
-            "id": request_id,
-        }
-
         response = await self._request_response(
             "POST",
             endpoint,
-            json=payload,
+            json={
+                "jsonrpc": "2.0",
+                "method": method,
+                "params": params,
+                "id": request_id,
+            },
         )
 
         try:
             data = response.json() if response.content else None
         except ValueError as exc:
-            # На HTTP-ошибке сохраняем исходный HTTPStatusError.
             response.raise_for_status()
-            raise SabyResponseError(
-                "СБИС вернул некорректный JSON"
-            ) from exc
+            raise SabyResponseError("СБИС вернул некорректный JSON") from exc
 
-        error = self._parse_jsonrpc_error(
-            data,
-            method,
-            response.status_code,
-        )
+        error = self._parse_jsonrpc_error(data, method, response.status_code)
         if error:
             raise error
 
         response.raise_for_status()
 
         if not isinstance(data, dict):
-            raise SabyResponseError(
-                "Ожидался объект в ответе JSON-RPC"
-            )
-
+            raise SabyResponseError("Ожидался объект в ответе JSON-RPC")
         return data
 
     @staticmethod
@@ -146,11 +113,9 @@ class BaseClient:
     ) -> SabyAPIError | None:
         if not isinstance(response, dict):
             return None
-
         error = response.get("error")
         if not isinstance(error, dict):
             return None
-
         return SabyAPIError(
             code=error.get("code"),
             message=error.get("message") or "Неизвестная ошибка СБИС",
@@ -165,57 +130,27 @@ class BaseClient:
         return await self._request("GET", endpoint, params=params, **kwargs)
 
     async def post(
-        self,
-        endpoint: str,
-        *,
-        json: dict | list | None = None,
-        data: Any = None,
-        params: dict | None = None,
-        **kwargs: Any,
+        self, endpoint: str, *, json: dict | list | None = None,
+        data: Any = None, params: dict | None = None, **kwargs: Any,
     ):
         return await self._request(
-            "POST",
-            endpoint,
-            json=json,
-            data=data,
-            params=params,
-            **kwargs,
+            "POST", endpoint, json=json, data=data, params=params, **kwargs
         )
 
     async def put(
-        self,
-        endpoint: str,
-        *,
-        json: dict | list | None = None,
-        data: Any = None,
-        params: dict | None = None,
-        **kwargs: Any,
+        self, endpoint: str, *, json: dict | list | None = None,
+        data: Any = None, params: dict | None = None, **kwargs: Any,
     ):
         return await self._request(
-            "PUT",
-            endpoint,
-            json=json,
-            data=data,
-            params=params,
-            **kwargs,
+            "PUT", endpoint, json=json, data=data, params=params, **kwargs
         )
 
     async def patch(
-        self,
-        endpoint: str,
-        *,
-        json: dict | list | None = None,
-        data: Any = None,
-        params: dict | None = None,
-        **kwargs: Any,
+        self, endpoint: str, *, json: dict | list | None = None,
+        data: Any = None, params: dict | None = None, **kwargs: Any,
     ):
         return await self._request(
-            "PATCH",
-            endpoint,
-            json=json,
-            data=data,
-            params=params,
-            **kwargs,
+            "PATCH", endpoint, json=json, data=data, params=params, **kwargs
         )
 
     async def delete(self, endpoint: str, *, params: dict | None = None, **kwargs: Any):
