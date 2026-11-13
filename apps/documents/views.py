@@ -11,6 +11,7 @@ from django.utils import timezone
 from apps.accounts.decorators import api_login_required
 from apps.documents.filters import EventsFilter
 from apps.documents.services import get_organizations, get_events, prepare_action
+from clients.exceptions import SabyAPIError, SabyResponseError
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +67,26 @@ def events(request):
 
     try:
         events_data = async_to_sync(get_events)(token, filters)
-    except (httpx.HTTPError, ValueError):
-        logger.exception("Не удалось получить список изменений")
-        messages.error(request, "Не удалось получить список изменений")
-        events_data = {}
+
+    except SabyAPIError as exc:
+        log_saby_error(exc, "get_events")
+
+        events_data = {
+            "events": [],
+            "has_more": False,
+            "last_event_id": None,
+            "error_message": exc.message,
+        }
+
+    except (httpx.HTTPError, SabyResponseError):
+        logger.exception("Ошибка взаимодействия с API СБИС при получении событий")
+
+        events_data = {
+            "events": [],
+            "has_more": False,
+            "last_event_id": None,
+            "error_message": "Не удалось получить данные из СБИС. Попробуйте позже.",
+        }
 
     context = {
         "events": events_data.get('events', []),
@@ -102,3 +119,19 @@ def approve_document(request):
         result = async_to_sync(prepare_action)(token, params)
         return HttpResponse(result)
     return HttpResponse('Документ не найден')
+
+
+def log_saby_error(exc: SabyAPIError, operation: str):
+    log = logger.warning if exc.error_type == "warning" else logger.error
+
+    log(
+        "Ошибка СБИС: operation=%s method=%s "
+        "http_status=%s code=%s type=%s message=%s details=%s",
+        operation,
+        exc.method,
+        exc.http_status,
+        exc.code,
+        exc.error_type,
+        exc.message,
+        exc.details,
+    )

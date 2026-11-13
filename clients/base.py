@@ -3,6 +3,8 @@ from typing import Any
 import httpx
 from django.conf import settings
 
+from clients.exceptions import SabyResponseError, SabyAPIError
+
 
 class BaseClient:
     def __init__(
@@ -75,22 +77,77 @@ class BaseClient:
             endpoint: str,
             method: str,
             params: dict,
-            request_id: int = 0
+            request_id: int = 0,
     ) -> dict:
-        response = await self.post(
-            endpoint,
-            json={
-                "jsonrpc": "2.0",
-                "method": method,
-                "params": params,
-                "id": request_id,
-            },
-        )
+
+        payload = {
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+            "id": request_id,
+        }
+
+        try:
+            response = await self.post(
+                endpoint,
+                json=payload,
+            )
+
+        except httpx.HTTPStatusError as exc:
+            # HTTP 500: пробуем извлечь JSON-RPC ошибку из тела ответа.
+            try:
+                response = exc.response.json()
+            except ValueError:
+                response = None
+
+            error = self._parse_jsonrpc_error(
+                response,
+                method,
+                exc.response.status_code,
+            )
+
+            if error:
+                raise error from exc
+
+            # Если это не JSON-RPC ошибка, сохраняем исходное HTTPX исключение.
+            raise
+
+        error = self._parse_jsonrpc_error(response, method)
+
+        if error:
+            raise error
 
         if not isinstance(response, dict):
-            raise ValueError("Ожидался объект в ответе JSON-RPC")
+            raise SabyResponseError(
+                "Ожидался объект в ответе JSON-RPC"
+            )
 
         return response
+
+    @staticmethod
+    def _parse_jsonrpc_error(
+            response: Any,
+            method: str,
+            http_status: int | None = None,
+    ) -> SabyAPIError | None:
+
+        if not isinstance(response, dict):
+            return None
+
+        error = response.get("error")
+
+        if not isinstance(error, dict):
+            return None
+
+        return SabyAPIError(
+            code=error.get("code"),
+            message=error.get("message") or "Неизвестная ошибка СБИС",
+            details=error.get("details"),
+            error_type=error.get("type"),
+            data=error.get("data"),
+            http_status=http_status,
+            method=method,
+        )
 
     async def get(self, endpoint: str, *, params: dict | None = None, **kwargs: Any):
         return await self._request("GET", endpoint, params=params, **kwargs)
