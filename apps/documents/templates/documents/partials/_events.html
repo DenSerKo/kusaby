@@ -1,19 +1,16 @@
+{% if error_message %}
+    <div class="notification notification--error" role="alert">
+        <strong>Ошибка:</strong> {{ error_message }}
+        {% if error_details %}<p>{{ error_details }}</p>{% endif %}
+    </div>
+{% endif %}
 {% for event in events %}
     {% include 'documents/partials/_event.html' with event=event %}
 {% endfor %}
-
 {% if has_more %}
-    <form
-        hx-trigger="revealed"
-        hx-post="{% url 'documents:events' %}"
-        hx-swap="outerHTML"
-    >
+    <form hx-trigger="revealed" hx-post="{% url 'documents:events' %}" hx-target="#events" hx-swap="beforeend">
         {% csrf_token %}
-        <input
-            type="hidden"
-            name="last_event_id"
-            value="{{ last_event_id }}"
-        >
+        <input type="hidden" name="last_event_id" value="{{ last_event_id }}">
         <p>Загрузка...</p>
     </form>
 {% endif %}
