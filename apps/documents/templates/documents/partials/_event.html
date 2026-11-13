@@ -7,17 +7,12 @@
         <p class="text-important">{{ event.counterparty.name }}</p>
         <p class="text-muted">{{ event.name }}</p>
         {% for event_item in event.events %}
-            <p class="text-muted">{{ event_item }}</p>
+            <p class="text-muted">{{ event_item.name }}{% if event_item.action.Название %} — {{ event_item.action.Название }}{% endif %}</p>
         {% endfor %}
     </div>
-    <div class="amount">
-        <p class="text-important">{{ event.amount }}</p>
-    </div>
-    <div class="action">
-        <form
-            hx-post="{% url 'documents:approve-document' %}"
-            hx-swap="outerHTML"
-        >
+    <div class="amount"><p class="text-important">{{ event.amount }}</p></div>
+    <div class="action" id="document-{{ event.id }}">
+        <form hx-post="{% url 'documents:approve-document' %}" hx-target="#document-{{ event.id }}" hx-swap="outerHTML">
             {% csrf_token %}
             <input type="hidden" name="document_id" value="{{ event.id }}">
             <button type="submit">Утвердить</button>
