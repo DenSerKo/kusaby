@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 from django.conf import settings
 
-from clients.exceptions import SabyResponseError, SabyAPIError
+from clients.exceptions import SabyAPIError, SabyResponseError
 
 
 class BaseClient:
@@ -45,6 +45,28 @@ class BaseClient:
             await self._client.aclose()
             self._client = None
 
+    async def _request_response(
+        self,
+        method: str,
+        endpoint: str,
+        *,
+        params: dict | None = None,
+        json: dict | list | None = None,
+        data: Any = None,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        if self._client is None:
+            raise RuntimeError("Используйте API клиент внутри 'async with'")
+
+        return await self._client.request(
+            method,
+            endpoint,
+            params=params,
+            json=json,
+            data=data,
+            **kwargs,
+        )
+
     async def _request(
         self,
         method: str,
@@ -55,10 +77,7 @@ class BaseClient:
         data: Any = None,
         **kwargs: Any,
     ) -> dict[str, Any] | list[Any] | None:
-        if self._client is None:
-            raise RuntimeError("Используйте API клиент внутри 'async with'")
-
-        response = await self._client.request(
+        response = await self._request_response(
             method,
             endpoint,
             params=params,
@@ -70,16 +89,16 @@ class BaseClient:
 
         if response.status_code == 204 or not response.content:
             return None
+
         return response.json()
 
     async def jsonrpc(
-            self,
-            endpoint: str,
-            method: str,
-            params: dict,
-            request_id: int = 0,
-    ) -> dict:
-
+        self,
+        endpoint: str,
+        method: str,
+        params: dict,
+        request_id: int = 0,
+    ) -> dict[str, Any]:
         payload = {
             "jsonrpc": "2.0",
             "method": method,
@@ -87,55 +106,48 @@ class BaseClient:
             "id": request_id,
         }
 
+        response = await self._request_response(
+            "POST",
+            endpoint,
+            json=payload,
+        )
+
         try:
-            response = await self.post(
-                endpoint,
-                json=payload,
-            )
+            data = response.json() if response.content else None
+        except ValueError as exc:
+            # На HTTP-ошибке сохраняем исходный HTTPStatusError.
+            response.raise_for_status()
+            raise SabyResponseError(
+                "СБИС вернул некорректный JSON"
+            ) from exc
 
-        except httpx.HTTPStatusError as exc:
-            # HTTP 500: пробуем извлечь JSON-RPC ошибку из тела ответа.
-            try:
-                response = exc.response.json()
-            except ValueError:
-                response = None
-
-            error = self._parse_jsonrpc_error(
-                response,
-                method,
-                exc.response.status_code,
-            )
-
-            if error:
-                raise error from exc
-
-            # Если это не JSON-RPC ошибка, сохраняем исходное HTTPX исключение.
-            raise
-
-        error = self._parse_jsonrpc_error(response, method)
-
+        error = self._parse_jsonrpc_error(
+            data,
+            method,
+            response.status_code,
+        )
         if error:
             raise error
 
-        if not isinstance(response, dict):
+        response.raise_for_status()
+
+        if not isinstance(data, dict):
             raise SabyResponseError(
                 "Ожидался объект в ответе JSON-RPC"
             )
 
-        return response
+        return data
 
     @staticmethod
     def _parse_jsonrpc_error(
-            response: Any,
-            method: str,
-            http_status: int | None = None,
+        response: Any,
+        method: str,
+        http_status: int | None = None,
     ) -> SabyAPIError | None:
-
         if not isinstance(response, dict):
             return None
 
         error = response.get("error")
-
         if not isinstance(error, dict):
             return None
 
