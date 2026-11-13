@@ -60,31 +60,63 @@ def organizations(request):
 
 @api_login_required
 def events(request):
-    value = request.POST.get("from_datetime")
+    # Фильтр передаётся через query string для GET и через POST
+    # при htmx-пагинации/совместимых POST-запросах.
+    params = request.GET if request.method == "GET" else request.POST
+    value = params.get("from_datetime")
+
     try:
         if value:
-            start = timezone.make_aware(datetime.strptime(value, "%Y-%m-%dT%H:%M"))
+            start = timezone.make_aware(
+                datetime.strptime(value, "%Y-%m-%dT%H:%M")
+            )
         else:
             start = timezone.now() - timedelta(days=30)
     except ValueError:
-        context = {"events": [], "has_more": False, "last_event_id": None,
-                   "error_message": "Некорректно указана дата начала периода."}
-        template = "documents/partials/_events.html" if request.method == "POST" else "documents/events.html"
+        context = {
+            "events": [],
+            "has_more": False,
+            "last_event_id": None,
+            "from_datetime": value or "",
+            "error_message": "Некорректно указана дата начала периода.",
+        }
+        template = (
+            "documents/partials/_events.html"
+            if request.method == "POST"
+            else "documents/events.html"
+        )
         return render(request, template, context, status=400)
 
+    # Передаём значение обратно в input, чтобы состояние формы
+    # соответствовало фильтру, использованному в запросе.
+    from_datetime = timezone.localtime(start).strftime("%Y-%m-%dT%H:%M")
+
     event_id = request.POST.get("last_event_id")
-    filters = EventsFilter(last_event_id=event_id) if event_id else EventsFilter(
-        from_datetime=timezone.localtime(start).strftime("%d.%m.%Y %H.%M.%S")
+    filters = (
+        EventsFilter(last_event_id=event_id)
+        if event_id
+        else EventsFilter(
+            from_datetime=timezone.localtime(start).strftime(
+                "%d.%m.%Y %H.%M.%S"
+            )
+        )
     )
 
     try:
-        data = async_to_sync(get_events)(request.session["saby_token"], filters)
+        data = async_to_sync(get_events)(
+            request.session["saby_token"], filters
+        )
         status = 200
     except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
         _log_error(exc, "get_events")
         message, details, status = _error_context(exc)
-        data = {"events": [], "has_more": False, "last_event_id": None,
-                "error_message": message, "error_details": details}
+        data = {
+            "events": [],
+            "has_more": False,
+            "last_event_id": None,
+            "error_message": message,
+            "error_details": details,
+        }
 
     context = {
         "events": data.get("events", []),
@@ -92,10 +124,14 @@ def events(request):
         "last_event_id": data.get("last_event_id"),
         "error_message": data.get("error_message"),
         "error_details": data.get("error_details"),
+        "from_datetime": from_datetime,
     }
-    template = "documents/partials/_events.html" if request.method == "POST" else "documents/events.html"
+    template = (
+        "documents/partials/_events.html"
+        if request.method == "POST"
+        else "documents/events.html"
+    )
     return render(request, template, context, status=status)
-
 
 @api_login_required
 @require_POST
