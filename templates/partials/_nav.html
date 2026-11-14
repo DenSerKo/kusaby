@@ -2,7 +2,7 @@
     <a href="{% url 'core:index' %}">Главная</a>
     <a href="{% url 'documents:index' %}">Документы</a>
     <a href="{% url 'documents:organizations' %}">Организации</a>
-    <a href="{% url 'documents:events' %}">История изменений</a>
+    <a href="{% url 'documents:events' %}">Журнал документов</a>
 
     {% if request.session.saby_token %}
         <form method="post" action="{% url 'accounts:logout' %}">
