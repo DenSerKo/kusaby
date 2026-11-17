@@ -76,6 +76,7 @@ def parse_document(document: dict[str, Any]) -> dict[str, Any]:
         "counterparty": counterparty,
         "organization": organization,
         "regulation": regulation.get("Название"),
+        "state": document.get("Состояние")
     }
 
 
@@ -176,15 +177,14 @@ def filter_documents_by_event_name(
     ]
 
 
-def filter_documents_by_event_action_name(
-    documents: list[dict[str, Any]],
-    event_action_name: str,
-) -> list[dict[str, Any]]:
+def filter_unapproved_documents(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         document
         for document in documents
         if any(
-            event.get("action_name") == event_action_name
+            event.get("action_name") == "Утверждение"
             for event in document.get("events", [])
         )
+        and
+           document["state"].get("Название") != "Выполнение завершено успешно"
     ]

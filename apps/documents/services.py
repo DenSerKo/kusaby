@@ -2,10 +2,7 @@ from typing import Any
 
 from .client import DocumentsClient
 from .filters import EventsFilter
-from .parsers import (
-    filter_documents_by_event_action_name,
-    parse_document_details,
-)
+from .parsers import parse_document_details, filter_unapproved_documents
 
 
 def _build_events_params(filters: EventsFilter) -> dict:
@@ -77,10 +74,7 @@ async def get_events(
         if last_events:
             last_event_id = last_events[-1].get("id")
 
-    documents = filter_documents_by_event_action_name(
-        documents,
-        "Утверждение",
-    )
+    documents = filter_unapproved_documents(documents)
 
     return {
         "events": documents,
@@ -95,6 +89,23 @@ async def prepare_action(
 ) -> list[dict[str, Any]]:
     async with DocumentsClient(token=token) as client:
         response = await client.prepare_action(params)
+
+    result = response.get("result", [])
+    if isinstance(result, dict):
+        result = [result]
+
+    if not isinstance(result, list):
+        return []
+
+    return result
+
+
+async def execute_action(
+    token: str,
+    params: dict,
+) -> list[dict[str, Any]]:
+    async with DocumentsClient(token=token) as client:
+        response = await client.execute_action(params)
 
     result = response.get("result", [])
     if isinstance(result, dict):

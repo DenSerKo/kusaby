@@ -6,7 +6,7 @@
     <h1>Список изменений</h1>
     <form
         hx-get="{% url 'documents:events' %}"
-        hx-trigger="change from:#from-datetime, submit"
+        hx-trigger="change delay:1s from:#from-datetime, submit"
         hx-target="#events"
         hx-push-url="true"
     >
