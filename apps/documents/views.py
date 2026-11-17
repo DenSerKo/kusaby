@@ -9,7 +9,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.decorators import api_login_required
 from apps.documents.filters import EventsFilter
-from apps.documents.services import get_events, get_organizations, prepare_action
+from apps.documents.services import get_events, get_organizations, prepare_action, execute_action
 from clients.exceptions import SabyAPIError, SabyResponseError
 
 logger = logging.getLogger(__name__)
@@ -141,18 +141,46 @@ def approve_document(request):
             "message": "Не указан идентификатор документа.", "details": None,
         }, status=400)
 
-    params = {"Документ": {
-        "Идентификатор": document_id,
-        "Этап": {
-            "Действие": {"Название": "Утвердить", "Сертификат": {
-                "ИНН": "2537824180", "ФИО": "Распутин Григорий Ефимович",
-            }},
-            "Название": "Утверждение",
-        },
-    }}
+    params = {
+        "Документ": {
+            "Идентификатор": document_id,
+            "Этап": {
+                "Действие":{
+                    "Название": "Утвердить",
+                    "Сертификат": {
+                        "ИНН": "2537824180", "ФИО": "Романов Николай Александрович",
+                    }
+                },
+                "Название": "Утверждение",
+            },
+        }
+    }
 
     try:
         async_to_sync(prepare_action)(request.session["saby_token"], params)
+    except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
+        _log_error(exc, "approve_document")
+        message, details, status = _error_context(exc)
+        return render(request, "documents/partials/_approve_result.html", {
+            "document_id": document_id, "success": False,
+            "message": message, "details": details,
+        }, status=status)
+
+    params = {
+            "Документ": {
+                "Идентификатор": document_id,
+                "Этап": {
+                    "Действие": {
+                        "Название": "Утвердить",
+                        "Сертификат": {}
+                    },
+                    "Название": "Утверждение"
+                }
+            }
+        }
+
+    try:
+        async_to_sync(execute_action)(request.session["saby_token"], params)
     except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
         _log_error(exc, "approve_document")
         message, details, status = _error_context(exc)

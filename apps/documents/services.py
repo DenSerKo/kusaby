@@ -104,3 +104,20 @@ async def prepare_action(
         return []
 
     return result
+
+
+async def execute_action(
+    token: str,
+    params: dict,
+) -> list[dict[str, Any]]:
+    async with DocumentsClient(token=token) as client:
+        response = await client.execute_action(params)
+
+    result = response.get("result", [])
+    if isinstance(result, dict):
+        result = [result]
+
+    if not isinstance(result, list):
+        return []
+
+    return result
