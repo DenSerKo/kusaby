@@ -32,10 +32,36 @@
                     value="{{ to_datetime }}"
                 >
             </div>
+            <div class="events-filter__field">
+                <label for="amount-min">Сумма от, ₽ <span>(необязательно)</span></label>
+                <input
+                    type="number"
+                    name="amount_min"
+                    id="amount-min"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    placeholder="Например, 1000"
+                    value="{{ amount_min }}"
+                >
+            </div>
+            <div class="events-filter__field">
+                <label for="amount-max">Сумма до, ₽ <span>(необязательно)</span></label>
+                <input
+                    type="number"
+                    name="amount_max"
+                    id="amount-max"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    placeholder="Например, 5000"
+                    value="{{ amount_max }}"
+                >
+            </div>
         </div>
 
         <div class="events-filter__footer">
-            <p>Если даты не заданы, поиск начинается за последний месяц и продолжается до текущего момента.</p>
+            <p>Пустые границы не ограничивают сумму. Если указана только одна — применяется только она.</p>
             <div class="events-filter__actions">
                 <a class="button button--secondary" href="{% url 'documents:events' %}">Сбросить</a>
                 <button type="submit">Применить</button>
