@@ -1,8 +1,18 @@
 {% extends 'base.html' %}
 {% block title %}
-	Главная
+    Главная
 {% endblock %}
 {% block main %}
-	<h1>Главная</h1>
-    <button id="saby-auth">Авторизоваться через Saby</button>
+    <h1>Главная</h1>
+    {% if request.session.saby_token %}
+        <p>Saby подключён.</p>
+    {% else %}
+        <button
+            type="button"
+            data-saby-auth
+            data-auth-url="{% url 'accounts:saby_authorize' %}"
+        >
+            Авторизоваться через Saby
+        </button>
+    {% endif %}
 {% endblock %}
