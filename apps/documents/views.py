@@ -139,6 +139,7 @@ def events(request):
         "error_details": data.get("error_details"),
         "from_datetime": from_datetime,
         "to_datetime": to_datetime,
+        "is_pagination": bool(event_id),
     }
     template = (
         "documents/partials/_events.html"
