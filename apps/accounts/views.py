@@ -18,6 +18,18 @@ from .oauth import exchange_code_for_token
 logger = logging.getLogger(__name__)
 
 
+async def _exit_saby(token: str) -> None:
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.post(
+            settings.SABY_OAUTH_LOGOUT_URL,
+            json={
+                "event": "exit",
+                "token": token,
+            },
+        )
+        response.raise_for_status()
+
+
 @require_GET
 @login_required
 def saby_authorize(request):
@@ -113,9 +125,23 @@ def saby_callback(request):
 @require_POST
 @login_required
 def disconnect_saby(request):
+    token = request.session.get("saby_token")
+
+    if token:
+        try:
+            async_to_sync(_exit_saby)(token)
+        except httpx.HTTPError:
+            logger.exception("Не удалось завершить Saby-сессию")
+            messages.error(
+                request,
+                "Не удалось завершить сессию Saby. "
+                "Токен оставлен в приложении; попробуйте отключить ещё раз.",
+            )
+            return redirect("core:index")
+
     request.session.pop("saby_token", None)
     request.session.pop("saby_oauth_state", None)
-    messages.success(request, "Подключение Saby отключено.")
+    messages.success(request, "Сессия Saby завершена, подключение отключено.")
     return redirect("core:index")
 
 
