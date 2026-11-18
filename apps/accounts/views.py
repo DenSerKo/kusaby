@@ -10,24 +10,11 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
-from .oauth import exchange_code_for_token
+from .oauth import exchange_code_for_token, logout_from_saby
 
 logger = logging.getLogger(__name__)
-
-
-async def _exit_saby(token: str) -> None:
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.post(
-            settings.SABY_OAUTH_LOGOUT_URL,
-            json={
-                "event": "exit",
-                "token": token,
-            },
-        )
-        response.raise_for_status()
 
 
 @require_GET
@@ -129,7 +116,7 @@ def disconnect_saby(request):
 
     if token:
         try:
-            async_to_sync(_exit_saby)(token)
+            async_to_sync(logout_from_saby)(token)
         except httpx.HTTPError:
             logger.exception("Не удалось завершить Saby-сессию")
             messages.error(
