@@ -19,7 +19,7 @@ class BaseClient:
         self.timeout = timeout
         self.headers = headers.copy() if headers else {}
         if self.token:
-            self.headers["X-SBISSessionID"] = self.token
+            self.headers["X-SBISAccessToken"] = self.token
         self.headers.setdefault("Content-Type", "application/json; charset=utf-8")
         self._client: httpx.AsyncClient | None = None
 
