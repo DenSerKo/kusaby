@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 
@@ -136,8 +137,22 @@ MAILERS = {
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
 SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
 SABY_API_AUTH_ENDPOINT = '/auth/service/'
-SABY_CLIENT_ID = '5008322050105118'
-SABY_CLIENT_SECRET = 'LLWC4BB8YK3YQELT6TAGY6SK'
+SABY_CLIENT_ID = os.environ.get("SABY_CLIENT_ID", "")
+SABY_CLIENT_SECRET = os.environ.get("SABY_CLIENT_SECRET", "")
+
+# Keep the OAuth authorization and token endpoints in the same Saby environment.
+SABY_OAUTH_BASE_URL = os.environ.get(
+    "SABY_OAUTH_BASE_URL",
+    SABY_API_BASE_URL.rstrip("/"),
+)
+SABY_OAUTH_AUTHORIZE_URL = os.environ.get(
+    "SABY_OAUTH_AUTHORIZE_URL",
+    f"{SABY_OAUTH_BASE_URL}/oauth/api/token",
+)
+SABY_OAUTH_TOKEN_URL = os.environ.get(
+    "SABY_OAUTH_TOKEN_URL",
+    f"{SABY_OAUTH_BASE_URL}/oauth/service/token",
+)
 
 
 # Logs are written to stdout/stderr and collected by the deployment platform.
