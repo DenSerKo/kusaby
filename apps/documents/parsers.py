@@ -147,11 +147,31 @@ def parse_document_details(document: dict[str, Any]) -> dict[str, Any]:
     if isinstance(events, dict):
         events = [events]
 
-    result["events"] = [
+    parsed_events = [
         parse_event(event)
         for event in events
         if isinstance(event, dict)
     ]
+    result["events"] = parsed_events
+
+    # Вложения приходят внутри событий документа. Собираем их в общий
+    # список, сохраняя порядок и исключая повторения по идентификатору.
+    attachments = []
+    seen_attachments = set()
+
+    for event in parsed_events:
+        for attachment in event["attachments"]:
+            attachment_id = attachment.get("id")
+            attachment_name = attachment.get("name")
+            key = ("id", attachment_id) if attachment_id else ("name", attachment_name)
+
+            if not attachment_name or key in seen_attachments:
+                continue
+
+            seen_attachments.add(key)
+            attachments.append(attachment)
+
+    result["attachments"] = attachments
 
     return result
 
