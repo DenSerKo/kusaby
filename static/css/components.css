@@ -31,7 +31,7 @@ input[type="submit"] {
     }
 }
 
-input:not([type="hidden"]),
+input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
 select,
 textarea {
     width: 100%;
