@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
 
 import httpx
 from asgiref.sync import async_to_sync
@@ -44,6 +45,21 @@ def _parse_filter_datetime(value: str) -> datetime:
     return timezone.make_aware(parsed, timezone.get_current_timezone())
 
 
+def _parse_filter_amount(value: str) -> Decimal | None:
+    if not value:
+        return None
+
+    try:
+        amount = Decimal(value.replace(",", "."))
+    except InvalidOperation as exc:
+        raise ValueError("Укажите корректную сумму в фильтре по сумме.") from exc
+
+    if not amount.is_finite() or amount < 0:
+        raise ValueError("Сумма должна быть неотрицательным числом.")
+
+    return amount
+
+
 def _format_saby_datetime(value: datetime) -> str:
     return timezone.localtime(value).strftime("%d.%m.%Y %H.%M.%S")
 
@@ -72,6 +88,8 @@ def organizations(request):
 def events(request):
     from_value = request.GET.get("from_datetime", "").strip()
     to_value = request.GET.get("to_datetime", "").strip()
+    amount_min_value = request.GET.get("amount_min", "").strip()
+    amount_max_value = request.GET.get("amount_max", "").strip()
     event_id = request.GET.get("last_event_id", "").strip() or None
     event_datetime = request.GET.get("last_event_datetime", "").strip() or None
 
@@ -84,11 +102,15 @@ def events(request):
             start = timezone.now() - timedelta(days=30)
 
         end = _parse_filter_datetime(to_value) if to_value else None
+        amount_min = _parse_filter_amount(amount_min_value)
+        amount_max = _parse_filter_amount(amount_max_value)
 
         if end and end < start:
             raise ValueError("Конец периода раньше его начала.")
+        if amount_min is not None and amount_max is not None and amount_min > amount_max:
+            raise ValueError("Минимальная сумма не может быть больше максимальной.")
 
-    except ValueError:
+    except ValueError as exc:
         context = {
             "events": [],
             "has_more": False,
@@ -96,7 +118,9 @@ def events(request):
             "last_event_datetime": None,
             "from_datetime": from_value,
             "to_datetime": to_value,
-            "error_message": "Проверьте период: даты должны быть корректными, а дата окончания — не раньше даты начала.",
+            "amount_min": amount_min_value,
+            "amount_max": amount_max_value,
+            "error_message": str(exc) or "Проверьте параметры фильтра.",
         }
         template = (
             "documents/partials/_events.html"
@@ -113,6 +137,8 @@ def events(request):
         to_datetime=_format_saby_datetime(end) if end else None,
         last_event_datetime=event_datetime,
         last_event_id=event_id,
+        amount_min=amount_min,
+        amount_max=amount_max,
     )
 
     try:
@@ -139,6 +165,8 @@ def events(request):
         "error_details": data.get("error_details"),
         "from_datetime": from_datetime,
         "to_datetime": to_datetime,
+        "amount_min": amount_min_value,
+        "amount_max": amount_max_value,
         "is_pagination": bool(event_id),
     }
     template = (
