@@ -134,10 +134,19 @@ form {
         min-width: 0;
         overflow-wrap: anywhere;
 
+        .document-heading {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: var(--space-1) var(--space-4);
+            min-width: 0;
+        }
+
         .document-organization {
-            margin-block: 0.15rem var(--space-2);
+            margin-inline-start: auto;
             color: var(--color-text-muted);
             font-size: var(--font-size-xs);
+            text-align: end;
         }
 
         .document-attachments {
@@ -170,8 +179,36 @@ form {
         text-align: end;
     }
 
-    .action form {
-        margin: 0;
+    .action {
+        min-width: 0;
+        max-width: 100%;
+
+        form {
+            margin: 0;
+        }
+
+        .notification {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .approval-details {
+            max-width: 100%;
+            margin-block: var(--space-2);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        &.action--result {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--space-2);
+        }
     }
 }
 
