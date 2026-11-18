@@ -7,6 +7,9 @@
 {% for event in events %}
     {% include 'documents/partials/_event.html' with event=event %}
 {% endfor %}
+{% if not events and not has_more and not error_message and not is_pagination %}
+    <p class="events-empty">Документы за выбранный период не найдены.</p>
+{% endif %}
 {% if has_more and last_event_id and last_event_datetime %}
     <form
         class="events-pagination"
