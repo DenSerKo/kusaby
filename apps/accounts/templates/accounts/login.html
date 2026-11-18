@@ -1,30 +1,16 @@
 {% extends "base.html" %}
 
+{% block title %}Вход в сервис{% endblock %}
+
 {% block main %}
-<h1>Вход</h1>
+    <h1>Вход в сервис</h1>
 
-{% if messages %}
-  <ul>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
-
-<form method="post">
-  {% csrf_token %}
-  <input type="hidden" name="next" value="{{ next }}">
-
-  <div>
-    <label for="username">Логин</label>
-    <input id="username" type="text" name="username" required>
-  </div>
-
-  <div>
-    <label for="password">Пароль</label>
-    <input id="password" type="password" name="password" required>
-  </div>
-
-  <button type="submit">Авторизоваться через Saby</button>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Войти</button>
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+    </form>
 {% endblock %}

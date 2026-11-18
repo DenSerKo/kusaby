@@ -10,21 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
+import environ
 from pathlib import Path
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-brbbcw=#%k_xbs&#l73)it%_e3kt+tf-rbtq1+6czu*a4v!hn+'
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-local-development-only-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -59,8 +66,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -133,9 +139,30 @@ MAILERS = {
     },
 }
 
+
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
 SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
-SABY_API_AUTH_ENDPOINT = '/auth/service/'
+SABY_CLIENT_ID = env("SABY_CLIENT_ID", default="")
+SABY_CLIENT_SECRET = env("SABY_CLIENT_SECRET", default="")
+SABY_REDIRECT_URI = "http://127.0.0.1:8000/accounts/saby/callback/"
+
+SABY_OAUTH_AUTHORIZE_URL = env(
+    "SABY_OAUTH_AUTHORIZE_URL",
+    default="https://fix-online.sbis.ru/oauth/api/token",
+)
+SABY_OAUTH_TOKEN_URL = env(
+    "SABY_OAUTH_TOKEN_URL",
+    default="https://fix-online.sbis.ru/oauth/service/token",
+)
+SABY_OAUTH_LOGOUT_URL = env(
+    "SABY_OAUTH_LOGOUT_URL",
+    default="https://fix-online.sbis.ru/oauth/service/",
+)
+
+# Django authentication
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "core:index"
+LOGOUT_REDIRECT_URL = "accounts:login"
 
 
 # Logs are written to stdout/stderr and collected by the deployment platform.
