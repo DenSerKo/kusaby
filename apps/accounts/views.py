@@ -12,7 +12,6 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from .oauth import exchange_code_for_token
-from .services import logout_from_saby
 
 logger = logging.getLogger(__name__)
 
@@ -118,14 +117,8 @@ def saby_callback(request):
 
 @require_POST
 def logout_view(request):
-    token = request.session.get("saby_token")
-
-    if token:
-        try:
-            async_to_sync(logout_from_saby)(token)
-        except (httpx.HTTPError, ValueError):
-            logger.exception("Не удалось завершить сессию Saby на стороне API")
-
+    # The current OAuth prototype only stores the access token locally.
+    # Do not call the legacy SBIS session logout method with an OAuth token.
     request.session.flush()
     messages.success(request, "Вы отключили Saby.")
     return redirect("core:index")
