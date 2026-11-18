@@ -4,20 +4,45 @@
 {% endblock %}
 {% block main %}
     <h1>Список изменений</h1>
+
     <form
+        class="events-filter"
         hx-get="{% url 'documents:events' %}"
-        hx-trigger="change delay:1s from:#from-datetime, submit"
+        hx-trigger="submit"
         hx-target="#events"
+        hx-swap="innerHTML"
         hx-push-url="true"
     >
-        <label for="from-datetime">Начало периода</label>
-        <input
-            type="datetime-local"
-            name="from_datetime"
-            id="from-datetime"
-            value="{{ from_datetime }}"
-        >
+        <div class="events-filter__fields">
+            <div class="events-filter__field">
+                <label for="from-datetime">Период с</label>
+                <input
+                    type="datetime-local"
+                    name="from_datetime"
+                    id="from-datetime"
+                    value="{{ from_datetime }}"
+                >
+            </div>
+            <div class="events-filter__field">
+                <label for="to-datetime">Период по <span>(необязательно)</span></label>
+                <input
+                    type="datetime-local"
+                    name="to_datetime"
+                    id="to-datetime"
+                    value="{{ to_datetime }}"
+                >
+            </div>
+        </div>
+
+        <div class="events-filter__footer">
+            <p>Если даты не заданы, поиск начинается за последний месяц и продолжается до текущего момента.</p>
+            <div class="events-filter__actions">
+                <a class="button button--secondary" href="{% url 'documents:events' %}">Сбросить</a>
+                <button type="submit">Применить</button>
+            </div>
+        </div>
     </form>
+
     <section id="events">
         {% include 'documents/partials/_events.html' %}
     </section>
