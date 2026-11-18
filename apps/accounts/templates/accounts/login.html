@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Подключение Saby{% endblock %}
+{% block title %}Вход в сервис{% endblock %}
 
 {% block main %}
-    <h1>Подключение Saby</h1>
-    <p>Для подключения вы будете перенаправлены на страницу авторизации Saby.</p>
-    <button
-        type="button"
-        data-saby-auth
-        data-auth-url="{% url 'accounts:saby_authorize' %}"
-    >
-        Авторизоваться через Saby
-    </button>
+    <h1>Вход в сервис</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Войти</button>
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+    </form>
 {% endblock %}
