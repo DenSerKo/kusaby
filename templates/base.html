@@ -14,6 +14,14 @@
 </head>
 <body>
     {% include 'partials/_nav.html' %}
+
+    {% if request.user.is_authenticated and request.session.saby_token %}
+        <aside style="padding: 10px; margin: 10px 0; border: 1px solid #d99; overflow-wrap: anywhere;">
+            <strong>Временный Saby access_token (только для разработки):</strong>
+            <pre style="white-space: pre-wrap; overflow-wrap: anywhere;">{{ request.session.saby_token }}</pre>
+        </aside>
+    {% endif %}
+
     <div id="notifications" aria-live="polite">
         {% if messages %}
             {% for message in messages %}
