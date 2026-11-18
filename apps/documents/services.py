@@ -5,18 +5,24 @@ from .filters import EventsFilter
 from .parsers import parse_document_details, filter_unapproved_documents
 
 
-def _build_events_params(filters: EventsFilter) -> dict:
-    api_filter = {
+def _build_events_params(filters: EventsFilter) -> dict[str, Any]:
+    api_filter: dict[str, Any] = {
         "Тип": "ДокОтгрВх",
         "Навигация": {
             "РазмерСтраницы": 50,
         },
+        "ДатаВремяС": (
+            filters.last_event_datetime
+            if filters.last_event_id and filters.last_event_datetime
+            else filters.from_datetime
+        ),
     }
 
-    if filters.last_event_id:
+    if filters.to_datetime:
+        api_filter["ДатаВремяПо"] = filters.to_datetime
+
+    if filters.last_event_id and filters.last_event_datetime:
         api_filter["ИдентификаторСобытия"] = filters.last_event_id
-    elif filters.from_datetime:
-        api_filter["ДатаВремяС"] = filters.from_datetime
 
     return {"Фильтр": api_filter}
 
@@ -68,18 +74,21 @@ async def get_events(
         if isinstance(document, dict)
     ]
 
-    last_event_id = None
-    if documents:
-        last_events = documents[-1].get("events", [])
-        if last_events:
-            last_event_id = last_events[-1].get("id")
+    # Курсор берём из последнего события исходного ответа, до локальной
+    # фильтрации документов: иначе отфильтрованные записи могут зациклить страницы.
+    last_event = None
+    for document in reversed(documents):
+        if document.get("events"):
+            last_event = document["events"][-1]
+            break
 
     documents = filter_unapproved_documents(documents)
 
     return {
         "events": documents,
         "has_more": has_more,
-        "last_event_id": last_event_id,
+        "last_event_id": last_event.get("id") if last_event else None,
+        "last_event_datetime": last_event.get("date") if last_event else None,
     }
 
 
