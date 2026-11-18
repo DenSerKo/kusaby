@@ -4,15 +4,22 @@
 {% endblock %}
 {% block main %}
     <h1>Главная</h1>
+    <p>Вы вошли в сервис как {{ request.user.get_username }}.</p>
+
     {% if request.session.saby_token %}
         <p>Saby подключён.</p>
+        <form method="post" action="{% url 'accounts:saby_disconnect' %}">
+            {% csrf_token %}
+            <button type="submit">Отключить Saby</button>
+        </form>
     {% else %}
+        <p>Saby пока не подключён.</p>
         <button
             type="button"
             data-saby-auth
             data-auth-url="{% url 'accounts:saby_authorize' %}"
         >
-            Авторизоваться через Saby
+            Подключить Saby
         </button>
     {% endif %}
 {% endblock %}
