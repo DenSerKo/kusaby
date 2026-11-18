@@ -155,6 +155,10 @@ SABY_OAUTH_TOKEN_URL = env(
     "SABY_OAUTH_TOKEN_URL",
     default="https://fix-online.sbis.ru/oauth/service/token",
 )
+SABY_OAUTH_LOGOUT_URL = env(
+    "SABY_OAUTH_LOGOUT_URL",
+    default="https://fix-online.sbis.ru/oauth/service/",
+)
 
 # Django authentication
 LOGIN_URL = "accounts:login"
