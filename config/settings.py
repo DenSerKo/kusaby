@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-brbbcw=#%k_xbs&#l73)it%_e3kt+tf-rbtq1+6czu*a4v!hn+'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-local-development-only-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -140,18 +140,15 @@ SABY_API_AUTH_ENDPOINT = '/auth/service/'
 SABY_CLIENT_ID = os.environ.get("SABY_CLIENT_ID", "")
 SABY_CLIENT_SECRET = os.environ.get("SABY_CLIENT_SECRET", "")
 
-# Keep the OAuth authorization and token endpoints in the same Saby environment.
-SABY_OAUTH_BASE_URL = os.environ.get(
-    "SABY_OAUTH_BASE_URL",
-    SABY_API_BASE_URL.rstrip("/"),
-)
+# Saby OAuth endpoints: authorization uses the configured online environment;
+# the token endpoint follows the host from the Saby Authorization Code guide.
 SABY_OAUTH_AUTHORIZE_URL = os.environ.get(
     "SABY_OAUTH_AUTHORIZE_URL",
-    f"{SABY_OAUTH_BASE_URL}/oauth/api/token",
+    "https://fix-online.sbis.ru/oauth/api/token",
 )
 SABY_OAUTH_TOKEN_URL = os.environ.get(
     "SABY_OAUTH_TOKEN_URL",
-    f"{SABY_OAUTH_BASE_URL}/oauth/service/token",
+    "https://online.sbis.ru/oauth/service/token",
 )
 
 
