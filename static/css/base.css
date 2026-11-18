@@ -85,7 +85,7 @@ p + p {
 }
 
 main {
-    width: min(100% - 2 * var(--space-6), var(--content-width));
+    width: min(100% - var(--space-6) - var(--space-6), var(--content-width));
     margin-inline: auto;
     padding-block: clamp(var(--space-7), 5vw, var(--space-10));
 }
