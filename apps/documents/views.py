@@ -39,6 +39,15 @@ def _log_error(exc, operation):
         logger.exception("Ошибка взаимодействия с СБИС: operation=%s", operation)
 
 
+def _parse_filter_datetime(value: str) -> datetime:
+    parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M")
+    return timezone.make_aware(parsed, timezone.get_current_timezone())
+
+
+def _format_saby_datetime(value: datetime) -> str:
+    return timezone.localtime(value).strftime("%d.%m.%Y %H.%M.%S")
+
+
 @api_login_required
 def index(request):
     return render(request, "documents/index.html")
@@ -61,22 +70,33 @@ def organizations(request):
 @api_login_required
 @require_GET
 def events(request):
-    value = request.GET.get("from_datetime")
+    from_value = request.GET.get("from_datetime", "").strip()
+    to_value = request.GET.get("to_datetime", "").strip()
+    event_id = request.GET.get("last_event_id", "").strip() or None
+    event_datetime = request.GET.get("last_event_datetime", "").strip() or None
 
     try:
-        if value:
-            start = timezone.make_aware(
-                datetime.strptime(value, "%Y-%m-%dT%H:%M")
-            )
+        # Для нового поиска начало по умолчанию — месяц назад.
+        # При пагинации сохраняем именно исходное начало фильтра.
+        if from_value:
+            start = _parse_filter_datetime(from_value)
         else:
             start = timezone.now() - timedelta(days=30)
+
+        end = _parse_filter_datetime(to_value) if to_value else None
+
+        if end and end < start:
+            raise ValueError("Конец периода раньше его начала.")
+
     except ValueError:
         context = {
             "events": [],
             "has_more": False,
             "last_event_id": None,
-            "from_datetime": value or "",
-            "error_message": "Некорректно указана дата начала периода.",
+            "last_event_datetime": None,
+            "from_datetime": from_value,
+            "to_datetime": to_value,
+            "error_message": "Проверьте период: даты должны быть корректными, а дата окончания — не раньше даты начала.",
         }
         template = (
             "documents/partials/_events.html"
@@ -85,24 +105,18 @@ def events(request):
         )
         return render(request, template, context, status=400)
 
-    # Сохраняем значение фильтра для input и для последующих страниц.
     from_datetime = timezone.localtime(start).strftime("%Y-%m-%dT%H:%M")
+    to_datetime = timezone.localtime(end).strftime("%Y-%m-%dT%H:%M") if end else ""
 
-    event_id = request.GET.get("last_event_id")
-    filters = (
-        EventsFilter(last_event_id=event_id)
-        if event_id
-        else EventsFilter(
-            from_datetime=timezone.localtime(start).strftime(
-                "%d.%m.%Y %H.%M.%S"
-            )
-        )
+    filters = EventsFilter(
+        from_datetime=_format_saby_datetime(start),
+        to_datetime=_format_saby_datetime(end) if end else None,
+        last_event_datetime=event_datetime,
+        last_event_id=event_id,
     )
 
     try:
-        data = async_to_sync(get_events)(
-            request.session["saby_token"], filters
-        )
+        data = async_to_sync(get_events)(request.session["saby_token"], filters)
         status = 200
     except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
         _log_error(exc, "get_events")
@@ -111,6 +125,7 @@ def events(request):
             "events": [],
             "has_more": False,
             "last_event_id": None,
+            "last_event_datetime": None,
             "error_message": message,
             "error_details": details,
         }
@@ -119,9 +134,11 @@ def events(request):
         "events": data.get("events", []),
         "has_more": data.get("has_more", False),
         "last_event_id": data.get("last_event_id"),
+        "last_event_datetime": data.get("last_event_datetime"),
         "error_message": data.get("error_message"),
         "error_details": data.get("error_details"),
         "from_datetime": from_datetime,
+        "to_datetime": to_datetime,
     }
     template = (
         "documents/partials/_events.html"
