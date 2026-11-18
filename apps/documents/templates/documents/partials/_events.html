@@ -6,10 +6,6 @@
 {% endif %}
 {% for event in events %}
     {% include 'documents/partials/_event.html' with event=event %}
-{% empty %}
-    {% if not error_message %}
-        <p class="events-empty">Документы за выбранный период не найдены.</p>
-    {% endif %}
 {% endfor %}
 {% if has_more and last_event_id and last_event_datetime %}
     <form
