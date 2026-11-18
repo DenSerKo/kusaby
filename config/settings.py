@@ -136,6 +136,8 @@ MAILERS = {
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
 SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
 SABY_API_AUTH_ENDPOINT = '/auth/service/'
+SABY_CLIENT_ID = '5008322050105118'
+SABY_CLIENT_SECRET = 'LLWC4BB8YK3YQELT6TAGY6SK'
 
 
 # Logs are written to stdout/stderr and collected by the deployment platform.
