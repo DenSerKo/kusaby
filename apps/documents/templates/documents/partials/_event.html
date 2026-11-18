@@ -5,10 +5,19 @@
     </div>
     <div class="document">
         <p class="text-important">{{ event.counterparty.name }}</p>
+        {% if event.organization.name %}
+            <p class="document-organization">{{ event.organization.name }}</p>
+        {% endif %}
         <p class="text-muted">{{ event.name }}</p>
-        {% for event_item in event.events %}
-            <p class="text-muted">{{ event_item.name }}{% if event_item.action_name %} — {{ event_item.action_name }}{% endif %}</p>
-        {% endfor %}
+        {% if event.attachments %}
+            <ul class="document-attachments">
+                {% for attachment in event.attachments %}
+                    <li>{{ attachment.name }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="document-attachments-empty">Вложения не указаны</p>
+        {% endif %}
     </div>
     <div class="amount"><p class="text-important">{{ event.amount }}</p></div>
     <div class="action" id="document-{{ event.id }}">
