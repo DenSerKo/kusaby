@@ -6,16 +6,23 @@
 {% endif %}
 {% for event in events %}
     {% include 'documents/partials/_event.html' with event=event %}
+{% empty %}
+    {% if not error_message %}
+        <p class="events-empty">Документы за выбранный период не найдены.</p>
+    {% endif %}
 {% endfor %}
-{% if has_more %}
+{% if has_more and last_event_id and last_event_datetime %}
     <form
+        class="events-pagination"
         hx-trigger="revealed"
         hx-get="{% url 'documents:events' %}"
         hx-target="this"
         hx-swap="outerHTML"
     >
         <input type="hidden" name="from_datetime" value="{{ from_datetime }}">
+        <input type="hidden" name="to_datetime" value="{{ to_datetime }}">
         <input type="hidden" name="last_event_id" value="{{ last_event_id }}">
-        <p>Загрузка...</p>
+        <input type="hidden" name="last_event_datetime" value="{{ last_event_datetime }}">
+        <p>Загрузка следующих документов…</p>
     </form>
 {% endif %}
