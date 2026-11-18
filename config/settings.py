@@ -66,8 +66,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,6 +139,7 @@ MAILERS = {
     },
 }
 
+
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
 SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
 SABY_API_AUTH_ENDPOINT = '/auth/service/'
@@ -147,8 +147,6 @@ SABY_CLIENT_ID = env("SABY_CLIENT_ID", default="")
 SABY_CLIENT_SECRET = env("SABY_CLIENT_SECRET", default="")
 SABY_REDIRECT_URI = "http://127.0.0.1:8000/accounts/saby/callback/"
 
-# Saby OAuth endpoints: authorization uses the configured online environment;
-# the token endpoint follows the host from the Saby Authorization Code guide.
 SABY_OAUTH_AUTHORIZE_URL = env(
     "SABY_OAUTH_AUTHORIZE_URL",
     default="https://fix-online.sbis.ru/oauth/api/token",
@@ -157,6 +155,11 @@ SABY_OAUTH_TOKEN_URL = env(
     "SABY_OAUTH_TOKEN_URL",
     default="https://fix-online.sbis.ru/oauth/service/token",
 )
+
+# Django authentication
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "core:index"
+LOGOUT_REDIRECT_URL = "accounts:login"
 
 
 # Logs are written to stdout/stderr and collected by the deployment platform.
