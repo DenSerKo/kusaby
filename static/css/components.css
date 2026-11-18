@@ -181,10 +181,19 @@ form {
 
     .action {
         min-width: 0;
-        max-width: 100%;
 
         form {
             margin: 0;
+        }
+    }
+
+    .approval-feedback {
+        grid-column: 1 / -1;
+        min-width: 0;
+        max-width: 100%;
+
+        &:empty {
+            display: none;
         }
 
         .notification {
@@ -194,20 +203,24 @@ form {
             overflow-wrap: anywhere;
         }
 
-        .approval-details {
-            max-width: 100%;
-            margin-block: var(--space-2);
-            color: var(--color-text-secondary);
-            font-size: var(--font-size-sm);
-            overflow-wrap: anywhere;
-            word-break: normal;
+        .approval-error {
+            display: grid;
+            gap: var(--space-2);
+            min-width: 0;
         }
 
-        &.action--result {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: var(--space-2);
+        .approval-details {
+            min-width: 0;
+            max-width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface-muted);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+            word-break: normal;
         }
     }
 }
