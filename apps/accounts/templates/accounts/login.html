@@ -1,30 +1,15 @@
 {% extends "base.html" %}
 
+{% block title %}Подключение Saby{% endblock %}
+
 {% block main %}
-<h1>Вход</h1>
-
-{% if messages %}
-  <ul>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
-
-<form method="post">
-  {% csrf_token %}
-  <input type="hidden" name="next" value="{{ next }}">
-
-  <div>
-    <label for="username">Логин</label>
-    <input id="username" type="text" name="username" required>
-  </div>
-
-  <div>
-    <label for="password">Пароль</label>
-    <input id="password" type="password" name="password" required>
-  </div>
-
-  <button type="submit">Авторизоваться через Saby</button>
-</form>
+    <h1>Подключение Saby</h1>
+    <p>Для подключения вы будете перенаправлены на страницу авторизации Saby.</p>
+    <button
+        type="button"
+        data-saby-auth
+        data-auth-url="{% url 'accounts:saby_authorize' %}"
+    >
+        Авторизоваться через Saby
+    </button>
 {% endblock %}
