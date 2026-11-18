@@ -4,10 +4,12 @@
         <p class="text-muted">{{ event.date_created|time:"H:i" }}</p>
     </div>
     <div class="document">
-        <p class="text-important">{{ event.counterparty.name }}</p>
-        {% if event.organization.name %}
-            <p class="document-organization">{{ event.organization.name }}</p>
-        {% endif %}
+        <div class="document-heading">
+            <p class="text-important">{{ event.counterparty.name }}</p>
+            {% if event.organization.name %}
+                <p class="document-organization">{{ event.organization.name }}</p>
+            {% endif %}
+        </div>
         <p class="text-muted">{{ event.name }}</p>
         {% if event.attachments %}
             <ul class="document-attachments">
