@@ -31,3 +31,16 @@ async def exchange_code_for_token(code: str) -> str:
         raise ValueError("В ответе Saby отсутствует access_token.")
 
     return access_token
+
+
+async def logout_from_saby(token: str) -> None:
+    """End the Saby OAuth session associated with the access token."""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.post(
+            settings.SABY_OAUTH_LOGOUT_URL,
+            json={
+                "event": "exit",
+                "token": token,
+            },
+        )
+        response.raise_for_status()
