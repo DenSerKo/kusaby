@@ -11,21 +11,27 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import environ
 from pathlib import Path
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-local-development-only-change-me")
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-local-development-only-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -137,18 +143,19 @@ MAILERS = {
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
 SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
 SABY_API_AUTH_ENDPOINT = '/auth/service/'
-SABY_CLIENT_ID = os.environ.get("SABY_CLIENT_ID", "")
-SABY_CLIENT_SECRET = os.environ.get("SABY_CLIENT_SECRET", "")
+SABY_CLIENT_ID = env("SABY_CLIENT_ID", default="")
+SABY_CLIENT_SECRET = env("SABY_CLIENT_SECRET", default="")
+SABY_REDIRECT_URI = "http://127.0.0.1:8000/accounts/saby/callback/"
 
 # Saby OAuth endpoints: authorization uses the configured online environment;
 # the token endpoint follows the host from the Saby Authorization Code guide.
-SABY_OAUTH_AUTHORIZE_URL = os.environ.get(
+SABY_OAUTH_AUTHORIZE_URL = env(
     "SABY_OAUTH_AUTHORIZE_URL",
-    "https://fix-online.sbis.ru/oauth/api/token",
+    default="https://fix-online.sbis.ru/oauth/api/token",
 )
-SABY_OAUTH_TOKEN_URL = os.environ.get(
+SABY_OAUTH_TOKEN_URL = env(
     "SABY_OAUTH_TOKEN_URL",
-    "https://online.sbis.ru/oauth/service/token",
+    default="https://fix-online.sbis.ru/oauth/service/token",
 )
 
 

@@ -25,6 +25,9 @@ def login_view(request):
 
 @require_GET
 def saby_authorize(request):
+
+    # Исправить. Пока молча подает авторизация при неверном секрет.
+
     if request.session.get("saby_token"):
         return redirect("core:index")
 
@@ -36,7 +39,7 @@ def saby_authorize(request):
     request.session["saby_oauth_state"] = state
 
     # This exact URL must be registered as the redirect URI in the Saby app settings.
-    redirect_uri = request.build_absolute_uri(reverse("accounts:saby_callback"))
+    redirect_uri = settings.SABY_REDIRECT_URI
     params = {
         "client_id": settings.SABY_CLIENT_ID,
         "response_type": "code",
