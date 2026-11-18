@@ -142,7 +142,6 @@ MAILERS = {
 
 SABY_API_BASE_URL = 'https://fix-online.sbis.ru/'
 SABY_API_SERVICE_ENDPOINT = '/service/?srv=1'
-SABY_API_AUTH_ENDPOINT = '/auth/service/'
 SABY_CLIENT_ID = env("SABY_CLIENT_ID", default="")
 SABY_CLIENT_SECRET = env("SABY_CLIENT_SECRET", default="")
 SABY_REDIRECT_URI = "http://127.0.0.1:8000/accounts/saby/callback/"
