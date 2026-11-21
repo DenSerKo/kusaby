@@ -76,6 +76,21 @@ def _parse_filter_kpp(value: str) -> str | None:
     return value
 
 
+def _get_counterparty_filter(
+    inn_value: str,
+    kpp_value: str,
+) -> tuple[str | None, str | None]:
+    inn = _parse_filter_inn(inn_value)
+    kpp = _parse_filter_kpp(kpp_value)
+
+    if kpp and not inn:
+        raise ValueError("Для фильтра по КПП необходимо указать ИНН организации.")
+    if kpp and len(inn) != 10:
+        raise ValueError("КПП можно указать только вместе с 10-значным ИНН организации.")
+
+    return inn, kpp
+
+
 def _format_saby_datetime(value: datetime) -> str:
     return timezone.localtime(value).strftime("%d.%m.%Y %H.%M.%S")
 
@@ -122,13 +137,10 @@ def events(request):
         end = _parse_filter_datetime(to_value) if to_value else None
         amount_min = _parse_filter_amount(amount_min_value)
         amount_max = _parse_filter_amount(amount_max_value)
-        counterparty_inn = _parse_filter_inn(counterparty_inn_value)
-        counterparty_kpp = _parse_filter_kpp(counterparty_kpp_value)
-
-        if counterparty_kpp and not counterparty_inn:
-            raise ValueError("Для фильтра по КПП необходимо указать ИНН организации.")
-        if counterparty_kpp and len(counterparty_inn) != 10:
-            raise ValueError("КПП можно указать только вместе с 10-значным ИНН организации.")
+        counterparty_inn, counterparty_kpp = _get_counterparty_filter(
+            counterparty_inn_value,
+            counterparty_kpp_value,
+        )
 
         if end and end < start:
             raise ValueError("Конец периода раньше его начала.")
