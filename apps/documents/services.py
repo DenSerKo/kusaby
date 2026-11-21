@@ -1,7 +1,11 @@
 from typing import Any
 
 from .client import DocumentsClient
-from .filters import EventsFilter, filter_documents_by_amount
+from .filters import (
+    EventsFilter,
+    filter_documents_by_amount,
+    filter_documents_by_counterparty,
+)
 from .parsers import parse_document_details, filter_unapproved_documents
 
 
@@ -87,6 +91,11 @@ async def get_events(
         documents,
         amount_min=filters.amount_min,
         amount_max=filters.amount_max,
+    )
+    documents = filter_documents_by_counterparty(
+        documents,
+        inn=filters.counterparty_inn,
+        kpp=filters.counterparty_kpp,
     )
 
     return {
