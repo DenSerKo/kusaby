@@ -58,10 +58,38 @@
                     value="{{ amount_max }}"
                 >
             </div>
+            <div class="events-filter__field">
+                <label for="counterparty-inn">ИНН контрагента <span>(необязательно)</span></label>
+                <input
+                    type="text"
+                    name="counterparty_inn"
+                    id="counterparty-inn"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    maxlength="12"
+                    pattern="[0-9]{10}|[0-9]{12}"
+                    placeholder="10 цифр — организация, 12 — ИП"
+                    value="{{ counterparty_inn }}"
+                >
+            </div>
+            <div class="events-filter__field">
+                <label for="counterparty-kpp">КПП контрагента <span>(необязательно)</span></label>
+                <input
+                    type="text"
+                    name="counterparty_kpp"
+                    id="counterparty-kpp"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    maxlength="9"
+                    pattern="[0-9]{9}"
+                    placeholder="9 цифр, только для организации"
+                    value="{{ counterparty_kpp }}"
+                >
+            </div>
         </div>
 
         <div class="events-filter__footer">
-            <p>Пустые границы не ограничивают сумму. Если указана только одна — применяется только она.</p>
+            <p>Пустые границы не ограничивают сумму. ИНН можно указать отдельно; КПП уточняет поиск и используется вместе с 10-значным ИНН организации.</p>
             <div class="events-filter__actions">
                 <a class="button button--secondary" href="{% url 'documents:events' %}">Сбросить</a>
                 <button type="submit">Применить</button>
