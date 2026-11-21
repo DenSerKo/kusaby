@@ -60,6 +60,22 @@ def _parse_filter_amount(value: str) -> Decimal | None:
     return amount
 
 
+def _parse_filter_inn(value: str) -> str | None:
+    if not value:
+        return None
+    if not value.isascii() or not value.isdigit() or len(value) not in (10, 12):
+        raise ValueError("ИНН должен содержать 10 цифр для организации или 12 цифр для ИП.")
+    return value
+
+
+def _parse_filter_kpp(value: str) -> str | None:
+    if not value:
+        return None
+    if not value.isascii() or not value.isdigit() or len(value) != 9:
+        raise ValueError("КПП должен содержать 9 цифр.")
+    return value
+
+
 def _format_saby_datetime(value: datetime) -> str:
     return timezone.localtime(value).strftime("%d.%m.%Y %H.%M.%S")
 
@@ -90,6 +106,8 @@ def events(request):
     to_value = request.GET.get("to_datetime", "").strip()
     amount_min_value = request.GET.get("amount_min", "").strip()
     amount_max_value = request.GET.get("amount_max", "").strip()
+    counterparty_inn_value = request.GET.get("counterparty_inn", "").strip()
+    counterparty_kpp_value = request.GET.get("counterparty_kpp", "").strip()
     event_id = request.GET.get("last_event_id", "").strip() or None
     event_datetime = request.GET.get("last_event_datetime", "").strip() or None
 
@@ -104,6 +122,13 @@ def events(request):
         end = _parse_filter_datetime(to_value) if to_value else None
         amount_min = _parse_filter_amount(amount_min_value)
         amount_max = _parse_filter_amount(amount_max_value)
+        counterparty_inn = _parse_filter_inn(counterparty_inn_value)
+        counterparty_kpp = _parse_filter_kpp(counterparty_kpp_value)
+
+        if counterparty_kpp and not counterparty_inn:
+            raise ValueError("Для фильтра по КПП необходимо указать ИНН организации.")
+        if counterparty_kpp and len(counterparty_inn) != 10:
+            raise ValueError("КПП можно указать только вместе с 10-значным ИНН организации.")
 
         if end and end < start:
             raise ValueError("Конец периода раньше его начала.")
@@ -120,6 +145,8 @@ def events(request):
             "to_datetime": to_value,
             "amount_min": amount_min_value,
             "amount_max": amount_max_value,
+            "counterparty_inn": counterparty_inn_value,
+            "counterparty_kpp": counterparty_kpp_value,
             "error_message": str(exc) or "Проверьте параметры фильтра.",
         }
         template = (
@@ -139,6 +166,8 @@ def events(request):
         last_event_id=event_id,
         amount_min=amount_min,
         amount_max=amount_max,
+        counterparty_inn=counterparty_inn,
+        counterparty_kpp=counterparty_kpp,
     )
 
     try:
@@ -167,6 +196,8 @@ def events(request):
         "to_datetime": to_datetime,
         "amount_min": amount_min_value,
         "amount_max": amount_max_value,
+        "counterparty_inn": counterparty_inn_value,
+        "counterparty_kpp": counterparty_kpp_value,
         "is_pagination": bool(event_id),
     }
     template = (
