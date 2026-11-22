@@ -181,30 +181,3 @@ def parse_datetime(value: str | None) -> datetime | None:
         return None
 
     return datetime.strptime(value, "%d.%m.%Y %H.%M.%S")
-
-
-def filter_documents_by_event_name(
-    documents: list[dict[str, Any]],
-    event_name: str,
-) -> list[dict[str, Any]]:
-    return [
-        document
-        for document in documents
-        if any(
-            event.get("name") == event_name
-            for event in document.get("events", [])
-        )
-    ]
-
-
-def filter_unapproved_documents(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        document
-        for document in documents
-        if any(
-            event.get("action_name") == "Утверждение"
-            for event in document.get("events", [])
-        )
-        and
-           document["state"].get("Название") != "Выполнение завершено успешно"
-    ]
