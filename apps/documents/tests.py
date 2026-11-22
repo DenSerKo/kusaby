@@ -48,7 +48,7 @@ class DocumentFiltersTests(SimpleTestCase):
                 "amount": "1600.00",
                 "counterparty": {"inn": "1234567890", "kpp": "123456789"},
                 "state": {"Название": "Ожидает утверждения"},
-                "events": [{"name": "Изменение", "action_name": "Согласование"}],
+                "events": [{"name": "Другое событие", "action_name": "Согласование"}],
             },
         ]
 
@@ -83,7 +83,10 @@ class DocumentFiltersTests(SimpleTestCase):
 
     def test_event_name_filter(self):
         result = filter_documents_by_event_name(self.documents, "Изменение")
-        self.assertEqual(len(result), len(self.documents))
+        self.assertEqual(
+            [document["id"] for document in result],
+            ["org-match", "ip-match", "wrong-kpp", "approved"],
+        )
 
     def test_unapproved_filter(self):
         result = filter_unapproved_documents(self.documents)
