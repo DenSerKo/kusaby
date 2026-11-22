@@ -5,7 +5,7 @@ from typing import Any
 
 @dataclass
 class EventsFilter:
-    """Параметры выборки событий и локальной фильтрации документов."""
+    """Параметры запроса событий и локальной фильтрации документов."""
 
     from_datetime: str
     to_datetime: str | None = None
@@ -15,6 +15,37 @@ class EventsFilter:
     amount_max: Decimal | None = None
     counterparty_inn: str | None = None
     counterparty_kpp: str | None = None
+
+
+def filter_documents_by_event_name(
+    documents: list[dict[str, Any]],
+    event_name: str,
+) -> list[dict[str, Any]]:
+    """Оставляет документы, содержащие событие с указанным названием."""
+    return [
+        document
+        for document in documents
+        if any(
+            event.get("name") == event_name
+            for event in document.get("events", [])
+        )
+    ]
+
+
+def filter_unapproved_documents(
+    documents: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Оставляет документы, ожидающие утверждения."""
+    return [
+        document
+        for document in documents
+        if any(
+            event.get("action_name") == "Утверждение"
+            for event in document.get("events", [])
+        )
+        and (document.get("state") or {}).get("Название")
+        != "Выполнение завершено успешно"
+    ]
 
 
 def filter_documents_by_amount(
@@ -74,3 +105,22 @@ def filter_documents_by_counterparty(
         filtered_documents.append(document)
 
     return filtered_documents
+
+
+def filter_documents(
+    documents: list[dict[str, Any]],
+    filters: EventsFilter,
+) -> list[dict[str, Any]]:
+    """Последовательно применяет локальные критерии к разобранным документам."""
+    documents = filter_unapproved_documents(documents)
+    documents = filter_documents_by_amount(
+        documents,
+        amount_min=filters.amount_min,
+        amount_max=filters.amount_max,
+    )
+    documents = filter_documents_by_counterparty(
+        documents,
+        inn=filters.counterparty_inn,
+        kpp=filters.counterparty_kpp,
+    )
+    return documents
