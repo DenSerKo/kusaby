@@ -1,12 +1,8 @@
 from typing import Any
 
 from .client import DocumentsClient
-from .filters import (
-    EventsFilter,
-    filter_documents_by_amount,
-    filter_documents_by_counterparty,
-)
-from .parsers import parse_document_details, filter_unapproved_documents
+from .filters import EventsFilter, filter_documents
+from .parsers import parse_document_details
 
 
 def _build_events_params(filters: EventsFilter) -> dict[str, Any]:
@@ -86,17 +82,7 @@ async def get_events(
             last_event = document["events"][-1]
             break
 
-    documents = filter_unapproved_documents(documents)
-    documents = filter_documents_by_amount(
-        documents,
-        amount_min=filters.amount_min,
-        amount_max=filters.amount_max,
-    )
-    documents = filter_documents_by_counterparty(
-        documents,
-        inn=filters.counterparty_inn,
-        kpp=filters.counterparty_kpp,
-    )
+    documents = filter_documents(documents, filters)
 
     return {
         "events": documents,
