@@ -4,13 +4,16 @@ from decimal import Decimal, InvalidOperation
 
 import httpx
 from asgiref.sync import async_to_sync
-from django.conf import settings
+from django.db import IntegrityError, transaction
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.decorators import api_login_required
+from apps.accounts.models import SabyConnection
 from apps.documents.filters import EventsFilter
+from apps.documents.models import ApprovalItem, ApprovalRun
+from apps.documents.tasks import approve_document_task
 from apps.documents.services import approve_saby_document, get_events, get_organizations
 from clients.exceptions import SabyAPIError, SabyResponseError
 
@@ -224,57 +227,52 @@ def events(request):
 @api_login_required
 @require_POST
 def approve_document(request):
-    document_id = request.POST.get("document_id")
+    document_id = request.POST.get("document_id", "").strip()
     if not document_id:
         return render(request, "documents/partials/_approve_result.html", {
-            "document_id": "", "success": False,
-            "message": "Не указан идентификатор документа.", "details": None,
+            "success": False,
+            "message": "Не указан идентификатор документа.",
+            "details": None,
         }, status=400)
 
-    prepare_params = {
-        "Документ": {
-            "Идентификатор": document_id,
-            "Этап": {
-                "Действие":{
-                    "Название": "Утвердить",
-                    "Сертификат": {
-                        "ИНН": settings.SABY_APPROVAL_CERTIFICATE_INN,
-                        "ФИО": settings.SABY_APPROVAL_CERTIFICATE_NAME,
-                    }
-                },
-                "Название": "Утверждение",
-            },
-        }
-    }
-
-    execute_params = {
-            "Документ": {
-                "Идентификатор": document_id,
-                "Этап": {
-                    "Действие": {
-                        "Название": "Утвердить",
-                        "Сертификат": {}
-                    },
-                    "Название": "Утверждение"
-                }
-            }
-        }
+    connection = SabyConnection.objects.filter(user=request.user).first()
+    if connection is None:
+        return render(request, "documents/partials/_approve_result.html", {
+            "success": False,
+            "message": "Подключение Saby устарело. Отключите и подключите Saby заново.",
+            "details": None,
+        }, status=409)
 
     try:
-        async_to_sync(approve_saby_document)(
-            request.session["saby_token"],
-            prepare_params,
-            execute_params,
-        )
-    except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
-        _log_error(exc, "approve_document")
-        message, details, status = _error_context(exc)
-        return render(request, "documents/partials/_approve_result.html", {
-            "document_id": document_id, "success": False,
-            "message": message, "details": details,
-        }, status=status)
+        with transaction.atomic():
+            run = ApprovalRun.objects.create(
+                user=request.user,
+                connection=connection,
+                trigger=ApprovalRun.Trigger.MANUAL,
+            )
+            item = ApprovalItem.objects.create(
+                run=run,
+                connection=connection,
+                document_id=document_id,
+            )
+    except IntegrityError:
+        active_item = ApprovalItem.objects.filter(
+            connection=connection,
+            document_id=document_id,
+            status__in=(ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING),
+        ).first()
+        if active_item:
+            return render(request, "documents/partials/_approve_result.html", {
+                "queued": True,
+                "message": "Утверждение этого документа уже выполняется.",
+                "details": None,
+            }, status=202)
+        raise
+
+    approve_document_task(item.pk)
 
     return render(request, "documents/partials/_approve_result.html", {
-        "document_id": document_id, "success": True,
-        "message": "СБИС успешно обработал запрос на утверждение.", "details": None,
-    })
+        "queued": True,
+        "message": "Задача утверждения поставлена в очередь. Результат появится после обработки.",
+        "details": None,
+    }, status=202)
