@@ -9,8 +9,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from apps.accounts.models import SabyConnection
 from django.shortcuts import redirect, render
+
+from apps.accounts.models import SabyConnection
 from django.views.decorators.http import require_GET, require_POST
 
 from .oauth import exchange_code_for_token, logout_from_saby
@@ -116,6 +117,7 @@ def saby_callback(request):
     connection.save(update_fields=["encrypted_access_token", "updated_at"])
 
     request.session.cycle_key()
+    request.session.pop("saby_token", None)
     messages.success(request, "Saby успешно подключён.")
 
     return _callback_page(
