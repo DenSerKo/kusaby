@@ -3,3 +3,4 @@ httpx>=0.28,<1.0
 
 django-environ
 huey>=3.5,<4
+cryptography>=44,<47
