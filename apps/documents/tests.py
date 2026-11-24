@@ -105,3 +105,32 @@ class DocumentFiltersTests(SimpleTestCase):
         )
         result = filter_documents(self.documents, filters)
         self.assertEqual([document["id"] for document in result], ["org-match"])
+
+
+class ApproveSabyDocumentTests(SimpleTestCase):
+    async def test_approval_uses_one_client_for_prepare_and_execute(self):
+        from unittest.mock import AsyncMock, patch
+
+        from .services import approve_saby_document
+
+        client = AsyncMock()
+        client.__aenter__.return_value = client
+        client.prepare_action.return_value = {"result": {"status": "prepared"}}
+        client.execute_action.return_value = {"result": {"status": "executed"}}
+
+        prepare_params = {"document": "prepare"}
+        execute_params = {"document": "execute"}
+
+        with patch("apps.documents.services.DocumentsClient", return_value=client) as factory:
+            result = await approve_saby_document(
+                "test-token",
+                prepare_params,
+                execute_params,
+            )
+
+        factory.assert_called_once_with(token="test-token")
+        client.prepare_action.assert_awaited_once_with(prepare_params)
+        client.execute_action.assert_awaited_once_with(execute_params)
+        client.__aexit__.assert_awaited_once()
+        self.assertEqual(result["prepare_result"], [{"status": "prepared"}])
+        self.assertEqual(result["execute_result"], [{"status": "executed"}])
