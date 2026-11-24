@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("started_at", models.DateTimeField(blank=True, null=True)),
                 ("finished_at", models.DateTimeField(blank=True, null=True)),
-                ("connection", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="approval_runs", to="accounts.sabyconnection")),
+                ("connection", models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="approval_runs", to="accounts.sabyconnection")),
                 ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="approval_runs", to=settings.AUTH_USER_MODEL)),
             ],
         ),
