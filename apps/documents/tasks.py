@@ -1,5 +1,4 @@
 import logging
-from datetime import timedelta
 
 import httpx
 from asgiref.sync import async_to_sync
@@ -90,6 +89,14 @@ def approve_document_task(item_id: int) -> None:
             item_id,
             ApprovalItem.Status.FAILED,
             "Saby не подтвердил выполнение утверждения.",
+            str(exc),
+        )
+    except Exception as exc:
+        logger.exception("Не удалось определить результат утверждения %s", item.document_id)
+        _finish_item(
+            item_id,
+            ApprovalItem.Status.UNKNOWN,
+            "Результат операции неизвестен. Проверьте документ в Saby перед повторным запуском.",
             str(exc),
         )
     else:
