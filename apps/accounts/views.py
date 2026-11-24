@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
+from apps.accounts.models import SabyConnection
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_POST
@@ -78,6 +79,17 @@ def saby_callback(request):
             "Авторизация не завершена. Это окно можно закрыть.",
         )
 
+    if not settings.SABY_TOKEN_ENCRYPTION_KEY:
+        messages.error(
+            request,
+            "Не настроен ключ шифрования токена Saby. "
+            "Добавьте SABY_TOKEN_ENCRYPTION_KEY в .env.",
+        )
+        return _callback_page(
+            request,
+            "Подключение не сохранено: не настроено шифрование токена.",
+        )
+
     code = request.GET.get("code")
     if not code:
         messages.error(request, "Saby не вернул код авторизации.")
@@ -98,6 +110,10 @@ def saby_callback(request):
             request,
             "Не удалось завершить авторизацию. Это окно можно закрыть.",
         )
+
+    connection, _ = SabyConnection.objects.get_or_create(user=request.user)
+    connection.set_access_token(access_token)
+    connection.save(update_fields=["encrypted_access_token", "updated_at"])
 
     request.session.cycle_key()
     request.session["saby_token"] = access_token
@@ -126,6 +142,7 @@ def disconnect_saby(request):
             )
             return redirect("core:index")
 
+    SabyConnection.objects.filter(user=request.user).delete()
     request.session.pop("saby_token", None)
     request.session.pop("saby_oauth_state", None)
     messages.success(request, "Сессия Saby завершена, подключение отключено.")
