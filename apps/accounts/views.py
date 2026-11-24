@@ -8,8 +8,8 @@ from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
-from apps.accounts.models import SabyConnection
 from django.contrib.auth.decorators import login_required
+from apps.accounts.models import SabyConnection
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @require_GET
 @login_required
 def saby_authorize(request):
-    if request.session.get("saby_token"):
+    if SabyConnection.objects.filter(user=request.user).exists():
         return redirect("core:index")
 
     if not settings.SABY_CLIENT_ID or not settings.SABY_CLIENT_SECRET:
@@ -116,7 +116,6 @@ def saby_callback(request):
     connection.save(update_fields=["encrypted_access_token", "updated_at"])
 
     request.session.cycle_key()
-    request.session["saby_token"] = access_token
     messages.success(request, "Saby успешно подключён.")
 
     return _callback_page(
@@ -128,11 +127,11 @@ def saby_callback(request):
 @require_POST
 @login_required
 def disconnect_saby(request):
-    token = request.session.get("saby_token")
+    connection = SabyConnection.objects.filter(user=request.user).first()
 
-    if token:
+    if connection:
         try:
-            async_to_sync(logout_from_saby)(token)
+            async_to_sync(logout_from_saby)(connection.get_access_token())
         except httpx.HTTPError:
             logger.exception("Не удалось завершить Saby-сессию")
             messages.error(
