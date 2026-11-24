@@ -83,6 +83,19 @@ def approve_document_task(item_id: int) -> None:
             "Не удалось достоверно определить результат. Проверьте документ в Saby перед повторным запуском.",
             str(exc),
         )
+    except httpx.HTTPStatusError as exc:
+        logger.exception("HTTP-ошибка при утверждении документа %s", item.document_id)
+        is_server_error = exc.response.status_code >= 500
+        _finish_item(
+            item_id,
+            ApprovalItem.Status.UNKNOWN if is_server_error else ApprovalItem.Status.FAILED,
+            (
+                "Saby вернул ошибку сервера. Проверьте документ перед повторным запуском."
+                if is_server_error
+                else "Saby отклонил запрос на утверждение."
+            ),
+            str(exc),
+        )
     except (SabyAPIError, httpx.HTTPError, RuntimeError, ValueError) as exc:
         logger.exception("Не удалось утвердить документ %s", item.document_id)
         _finish_item(
