@@ -6,6 +6,8 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 
+from apps.accounts.models import SabyConnection
+
 
 def api_login_required(view_func):
     """Require a Django user session and a connected Saby account."""
@@ -20,7 +22,7 @@ def api_login_required(view_func):
                 return response
             return redirect(login_url)
 
-        if not request.session.get("saby_token"):
+        if not SabyConnection.objects.filter(user=request.user).exists():
             messages.warning(request, "Сначала подключите Saby.")
             connect_url = reverse("core:index")
             if request.headers.get("HX-Request") == "true":
