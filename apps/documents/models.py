@@ -52,7 +52,9 @@ class ApprovalItem(models.Model):
     )
     connection = models.ForeignKey(
         "accounts.SabyConnection",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="approval_items",
     )
     document_id = models.CharField(max_length=255)
