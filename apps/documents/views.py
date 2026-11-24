@@ -100,6 +100,10 @@ def _format_saby_datetime(value: datetime) -> str:
     return timezone.localtime(value).strftime("%d.%m.%Y %H.%M.%S")
 
 
+def _get_saby_token(request) -> str:
+    return request.user.saby_connection.get_access_token()
+
+
 @api_login_required
 def index(request):
     return render(request, "documents/index.html")
@@ -111,7 +115,7 @@ def organizations(request):
     status = 200
     try:
         context["organizations"] = async_to_sync(get_organizations)(
-            request.session["saby_token"], {"Фильтр": {}}
+            _get_saby_token(request), {"Фильтр": {}}
         )
     except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
         _log_error(exc, "get_organizations")
@@ -188,7 +192,7 @@ def events(request):
     )
 
     try:
-        data = async_to_sync(get_events)(request.session["saby_token"], filters)
+        data = async_to_sync(get_events)(_get_saby_token(request), filters)
         status = 200
     except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
         _log_error(exc, "get_events")
