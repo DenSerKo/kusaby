@@ -1,5 +1,12 @@
 {% if queued %}
-    <p class="notification" role="status">{{ message }}</p>
+    <div
+        class="approval-pending"
+        hx-get="{% url 'documents:approval-status' item_id %}"
+        hx-trigger="every 2s"
+        hx-swap="outerHTML"
+    >
+        <p class="notification" role="status">{{ message }}</p>
+    </div>
 {% elif success %}
     <p class="notification notification--success" role="status">{{ message }}</p>
 {% else %}
