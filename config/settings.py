@@ -193,3 +193,5 @@ HUEY = SqliteHuey(
 # Approval certificate identity is configured locally, never embedded in source.
 SABY_APPROVAL_CERTIFICATE_INN = env("SABY_APPROVAL_CERTIFICATE_INN", default="")
 SABY_APPROVAL_CERTIFICATE_NAME = env("SABY_APPROVAL_CERTIFICATE_NAME", default="")
+
+SABY_TOKEN_ENCRYPTION_KEY = env("SABY_TOKEN_ENCRYPTION_KEY", default="")
