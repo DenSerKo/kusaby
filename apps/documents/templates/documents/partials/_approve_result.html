@@ -1,4 +1,6 @@
-{% if success %}
+{% if queued %}
+    <p class="notification" role="status">{{ message }}</p>
+{% elif success %}
     <p class="notification notification--success" role="status">{{ message }}</p>
 {% else %}
     <div class="approval-error" role="alert">
