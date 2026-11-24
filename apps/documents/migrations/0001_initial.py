@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ("details", models.TextField(blank=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("connection", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="approval_items", to="accounts.sabyconnection")),
+                ("connection", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="approval_items", to="accounts.sabyconnection")),
                 ("run", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="items", to="documents.approvalrun")),
             ],
         ),
