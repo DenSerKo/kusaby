@@ -14,7 +14,7 @@ from apps.accounts.models import SabyConnection
 from apps.documents.filters import EventsFilter
 from apps.documents.models import ApprovalItem, ApprovalRun
 from apps.documents.tasks import approve_document_task
-from apps.documents.services import approve_saby_document, get_events, get_organizations
+from apps.documents.services import get_events, get_organizations
 from clients.exceptions import SabyAPIError, SabyResponseError
 
 logger = logging.getLogger(__name__)
@@ -270,7 +270,21 @@ def approve_document(request):
             }, status=202)
         raise
 
-    approve_document_task(item.pk)
+    try:
+        approve_document_task(item.pk)
+    except Exception:
+        logger.exception("Не удалось поставить утверждение документа %s в очередь", document_id)
+        item.status = ApprovalItem.Status.FAILED
+        item.message = "Не удалось поставить задачу в очередь. Повторите попытку позже."
+        item.save(update_fields=["status", "message", "updated_at"])
+        run.status = ApprovalRun.Status.FAILED
+        run.finished_at = timezone.now()
+        run.save(update_fields=["status", "finished_at"])
+        return render(request, "documents/partials/_approve_result.html", {
+            "success": False,
+            "message": item.message,
+            "details": None,
+        }, status=503)
 
     return render(request, "documents/partials/_approve_result.html", {
         "queued": True,
