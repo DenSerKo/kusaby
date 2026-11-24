@@ -4,13 +4,14 @@ from decimal import Decimal, InvalidOperation
 
 import httpx
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.decorators import api_login_required
 from apps.documents.filters import EventsFilter
-from apps.documents.services import get_events, get_organizations, prepare_action, execute_action
+from apps.documents.services import approve_saby_document, get_events, get_organizations
 from clients.exceptions import SabyAPIError, SabyResponseError
 
 logger = logging.getLogger(__name__)
@@ -230,14 +231,15 @@ def approve_document(request):
             "message": "Не указан идентификатор документа.", "details": None,
         }, status=400)
 
-    params = {
+    prepare_params = {
         "Документ": {
             "Идентификатор": document_id,
             "Этап": {
                 "Действие":{
                     "Название": "Утвердить",
                     "Сертификат": {
-                        "ИНН": "2537824180", "ФИО": "Романов Николай Александрович",
+                        "ИНН": settings.SABY_APPROVAL_CERTIFICATE_INN,
+                        "ФИО": settings.SABY_APPROVAL_CERTIFICATE_NAME,
                     }
                 },
                 "Название": "Утверждение",
@@ -245,17 +247,7 @@ def approve_document(request):
         }
     }
 
-    try:
-        async_to_sync(prepare_action)(request.session["saby_token"], params)
-    except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
-        _log_error(exc, "approve_document")
-        message, details, status = _error_context(exc)
-        return render(request, "documents/partials/_approve_result.html", {
-            "document_id": document_id, "success": False,
-            "message": message, "details": details,
-        }, status=status)
-
-    params = {
+    execute_params = {
             "Документ": {
                 "Идентификатор": document_id,
                 "Этап": {
@@ -269,7 +261,11 @@ def approve_document(request):
         }
 
     try:
-        async_to_sync(execute_action)(request.session["saby_token"], params)
+        async_to_sync(approve_saby_document)(
+            request.session["saby_token"],
+            prepare_params,
+            execute_params,
+        )
     except (SabyAPIError, SabyResponseError, httpx.HTTPError) as exc:
         _log_error(exc, "approve_document")
         message, details, status = _error_context(exc)
