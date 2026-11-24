@@ -299,7 +299,6 @@ def approve_document(request):
     }, status=202)
 
 
-
 @login_required
 @require_GET
 def approval_status(request, item_id: int):
