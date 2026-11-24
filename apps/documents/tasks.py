@@ -41,6 +41,8 @@ def approve_document_task(item_id: int) -> None:
                 "SABY_APPROVAL_CERTIFICATE_NAME."
             )
 
+        if item.connection is None:
+            raise RuntimeError("Подключение Saby было отключено до выполнения задачи.")
         token = item.connection.get_access_token()
         prepare_params = {
             "Документ": {
