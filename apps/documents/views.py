@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 
 import httpx
 from asgiref.sync import async_to_sync
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -13,8 +14,8 @@ from apps.accounts.decorators import api_login_required
 from apps.accounts.models import SabyConnection
 from apps.documents.filters import EventsFilter
 from apps.documents.models import ApprovalItem, ApprovalRun
-from apps.documents.tasks import approve_document_task
 from apps.documents.services import get_events, get_organizations
+from apps.documents.tasks import approve_document_task
 from clients.exceptions import SabyAPIError, SabyResponseError
 
 logger = logging.getLogger(__name__)
@@ -295,7 +296,7 @@ def approve_document(request):
 
 
 
-@api_login_required
+@login_required
 @require_GET
 def approval_status(request, item_id: int):
     item = get_object_or_404(
