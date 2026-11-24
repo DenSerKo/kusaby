@@ -124,3 +124,25 @@ async def execute_action(
         return []
 
     return result
+
+
+async def approve_saby_document(
+    token: str,
+    prepare_params: dict[str, Any],
+    execute_params: dict[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    """Подготавливает и выполняет действие над документом в одной Saby-сессии."""
+    async with DocumentsClient(token=token) as client:
+        prepare_response = await client.prepare_action(prepare_params)
+        execute_response = await client.execute_action(execute_params)
+
+    def normalize_result(response: dict[str, Any]) -> list[dict[str, Any]]:
+        result = response.get("result", [])
+        if isinstance(result, dict):
+            return [result]
+        return result if isinstance(result, list) else []
+
+    return {
+        "prepare_result": normalize_result(prepare_response),
+        "execute_result": normalize_result(execute_response),
+    }
