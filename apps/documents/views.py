@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 import httpx
 from asgiref.sync import async_to_sync
 from django.db import IntegrityError, transaction
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -276,3 +276,42 @@ def approve_document(request):
         "message": "Задача утверждения поставлена в очередь. Результат появится после обработки.",
         "details": None,
     }, status=202)
+
+
+
+@api_login_required
+@require_GET
+def approval_status(request, item_id: int):
+    item = get_object_or_404(
+        ApprovalItem.objects.select_related("run"),
+        pk=item_id,
+        run__user=request.user,
+    )
+
+    if item.status in (ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING):
+        context = {
+            "queued": True,
+            "item_id": item.pk,
+            "message": (
+                "Задача находится в очереди."
+                if item.status == ApprovalItem.Status.QUEUED
+                else "Выполняется утверждение документа в Saby…"
+            ),
+        }
+    elif item.status == ApprovalItem.Status.SUCCEEDED:
+        context = {
+            "success": True,
+            "message": item.message,
+        }
+    else:
+        context = {
+            "success": False,
+            "message": item.message,
+            "details": item.details,
+        }
+
+    return render(
+        request,
+        "documents/partials/_approve_result.html",
+        context,
+    )
