@@ -264,6 +264,7 @@ def approve_document(request):
         if active_item:
             return render(request, "documents/partials/_approve_result.html", {
                 "queued": True,
+                "item_id": active_item.pk,
                 "message": "Утверждение этого документа уже выполняется.",
                 "details": None,
             }, status=202)
@@ -273,6 +274,7 @@ def approve_document(request):
 
     return render(request, "documents/partials/_approve_result.html", {
         "queued": True,
+        "item_id": item.pk,
         "message": "Задача утверждения поставлена в очередь. Результат появится после обработки.",
         "details": None,
     }, status=202)
