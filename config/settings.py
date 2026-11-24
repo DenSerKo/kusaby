@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 import environ
 from pathlib import Path
+from huey import SqliteHuey
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'huey.contrib.djhuey',
 
     'apps.core',
     'apps.documents',
@@ -179,3 +181,15 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+
+# Local background task queue. Keep it separate from Django's SQLite database.
+HUEY = SqliteHuey(
+    filename=str(BASE_DIR / "huey.sqlite3"),
+    immediate=False,
+    results=True,
+)
+
+# Approval certificate identity is configured locally, never embedded in source.
+SABY_APPROVAL_CERTIFICATE_INN = env("SABY_APPROVAL_CERTIFICATE_INN", default="")
+SABY_APPROVAL_CERTIFICATE_NAME = env("SABY_APPROVAL_CERTIFICATE_NAME", default="")
