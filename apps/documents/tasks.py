@@ -5,10 +5,12 @@ from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from huey.contrib.djhuey import db_task
+from huey import crontab
+from huey.contrib.djhuey import db_periodic_task, db_task
 
-from apps.documents.models import ApprovalItem, ApprovalRun
-from apps.documents.services import approve_saby_document
+from apps.accounts.models import SabyConnection
+from apps.documents.models import ApprovalItem, ApprovalRun, SabyEventsCursor
+from apps.documents.services import approve_saby_document, get_monitoring_events_page
 from clients.exceptions import SabyAPIError, SabyResponseError
 
 logger = logging.getLogger(__name__)
@@ -225,3 +227,95 @@ def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
             )
             item.run.finished_at = now
             item.run.save(update_fields=["status", "finished_at"])
+
+
+@db_periodic_task(crontab(minute="*/5"))
+def sync_approval_events() -> None:
+    """Сверяет ожидающие операции с общим потоком событий Saby."""
+    overdue_after = timezone.timedelta(minutes=30)
+    for connection in SabyConnection.objects.iterator():
+        try:
+            _sync_connection_events(connection, overdue_after)
+        except Exception:
+            logger.exception(
+                "Failed to synchronize Saby events for connection=%s",
+                connection.pk,
+            )
+
+
+def _sync_connection_events(connection, overdue_after) -> None:
+    pending_items = ApprovalItem.objects.filter(
+        connection=connection,
+        status__in=(ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE),
+    )
+    if not pending_items.exists():
+        return
+
+    cursor, _ = SabyEventsCursor.objects.get_or_create(connection=connection)
+    if cursor.last_event_datetime:
+        start_datetime = cursor.last_event_datetime
+    else:
+        earliest = pending_items.order_by("accepted_at").first()
+        start_datetime = timezone.localtime(
+            earliest.accepted_at or earliest.created_at
+        ).strftime("%d.%m.%Y %H.%M.%S")
+
+    token = connection.get_access_token()
+    # Ограничиваем число страниц за один запуск, чтобы периодическая задача
+    # не занимала worker бесконечно при большом потоке событий.
+    for _ in range(20):
+        page = async_to_sync(get_monitoring_events_page)(
+            token,
+            from_datetime=start_datetime,
+            last_event_id=cursor.last_event_id or None,
+            last_event_datetime=cursor.last_event_datetime or None,
+            last_event_document_id=cursor.last_event_document_id or None,
+            last_organization=cursor.last_organization or None,
+        )
+        documents = page["documents"]
+        for document in documents:
+            if (document.get("state") or {}).get("Название") != "Выполнение завершено успешно":
+                continue
+            item = ApprovalItem.objects.filter(
+                connection=connection,
+                document_id=document.get("id"),
+                status__in=(ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE),
+            ).first()
+            if item is None:
+                continue
+            item.status = ApprovalItem.Status.SUCCEEDED
+            item.message = "Документ успешно подписан в Saby."
+            item.details = ""
+            item.save(update_fields=["status", "message", "details", "updated_at"])
+            item.run.status = ApprovalRun.Status.COMPLETED
+            item.run.finished_at = timezone.now()
+            item.run.save(update_fields=["status", "finished_at"])
+
+        next_cursor = page["cursor"]
+        if next_cursor["event_id"] and next_cursor["event_datetime"] and next_cursor["document_id"]:
+            cursor.last_event_id = next_cursor["event_id"]
+            cursor.last_event_datetime = next_cursor["event_datetime"]
+            cursor.last_event_document_id = next_cursor["document_id"]
+            cursor.last_organization = next_cursor["organization"] or {}
+            cursor.save(update_fields=[
+                "last_event_id",
+                "last_event_datetime",
+                "last_event_document_id",
+                "last_organization",
+                "updated_at",
+            ])
+        if not page["has_more"] or not documents:
+            break
+
+    cutoff = timezone.now() - overdue_after
+    stale_items = ApprovalItem.objects.filter(
+        connection=connection,
+        status=ApprovalItem.Status.PENDING,
+        accepted_at__lte=cutoff,
+    )
+    for item in stale_items.select_related("run"):
+        item.status = ApprovalItem.Status.OVERDUE
+        item.message = "Saby пока не подтвердил подписание. Проверьте документ в Saby."
+        item.save(update_fields=["status", "message", "updated_at"])
+        item.run.status = ApprovalRun.Status.PENDING
+        item.run.save(update_fields=["status"])
