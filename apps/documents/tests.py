@@ -134,3 +134,33 @@ class ApproveSabyDocumentTests(SimpleTestCase):
         client.__aexit__.assert_awaited_once()
         self.assertEqual(result["prepare_result"], [{"status": "prepared"}])
         self.assertEqual(result["execute_result"], [{"status": "executed"}])
+
+
+class SabyDocumentLinkTests(SimpleTestCase):
+    def test_parse_document_keeps_direct_saby_link(self):
+        from .parsers import parse_document
+
+        document = {
+            "Идентификатор": "document-1",
+            "СсылкаДляНашаОрганизация": "https://online.saby.ru/doc/1",
+        }
+        self.assertEqual(
+            parse_document(document)["saby_url"],
+            "https://online.saby.ru/doc/1",
+        )
+
+    def test_parse_document_falls_back_to_cabinet_link_in_event_attachment(self):
+        from .parsers import parse_document
+
+        document = {
+            "Идентификатор": "document-2",
+            "Событие": [{
+                "Вложение": [{
+                    "СсылкаВКабинет": "https://online.saby.ru/doc/2",
+                }],
+            }],
+        }
+        self.assertEqual(
+            parse_document(document)["saby_url"],
+            "https://online.saby.ru/doc/2",
+        )
