@@ -76,7 +76,13 @@ def parse_document(document: dict[str, Any]) -> dict[str, Any]:
         "counterparty": counterparty,
         "organization": organization,
         "regulation": regulation.get("Название"),
-        "state": document.get("Состояние")
+        "state": document.get("Состояние"),
+        "saby_url": (
+            document.get("СсылкаДляНашаОрганизация")
+            or document.get("Событие", [{}])[0].get("Вложение", [{}])[0].get("СсылкаВКабинет")
+            if isinstance(document.get("Событие"), list) and document.get("Событие")
+            else document.get("СсылкаДляНашаОрганизация") or document.get("СсылкаДляКонтрагент")
+        ),
     }
 
 
