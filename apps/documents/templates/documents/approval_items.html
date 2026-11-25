@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Подписание документов{% endblock %}
+{% block main %}
+    <h1>Подписание документов</h1>
+    {% if items %}
+        <div class="approval-items">
+            {% for item in items %}
+                <article class="approval-item">
+                    <div>
+                        <strong>{{ item.document_id }}</strong>
+                        <p>{{ item.message }}</p>
+                        <p class="text-muted">{{ item.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    <div>
+                        {% if item.status == "overdue" %}
+                            <span>Просрочен</span>
+                        {% elif item.status == "pending" %}
+                            <span>Ожидает подтверждения</span>
+                        {% elif item.status == "failed" %}
+                            <span>Ошибка</span>
+                        {% else %}
+                            <span>Требует проверки</span>
+                        {% endif %}
+                        {% if item.saby_url %}
+                            <p><a href="{{ item.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a></p>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Нет документов, требующих внимания.</p>
+    {% endif %}
+{% endblock %}
