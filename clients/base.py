@@ -1,9 +1,13 @@
+import logging
 from typing import Any
 
 import httpx
 from django.conf import settings
 
 from clients.exceptions import SabyAPIError, SabyResponseError
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseClient:
@@ -78,15 +82,29 @@ class BaseClient:
         params: dict,
         request_id: int = 0,
     ) -> dict[str, Any]:
+        request_payload = {
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+            "id": request_id,
+        }
+        logger.debug(
+            "Saby JSON-RPC request: method=%s endpoint=%s payload=%s",
+            method,
+            endpoint,
+            request_payload,
+        )
+
         response = await self._request_response(
             "POST",
             endpoint,
-            json={
-                "jsonrpc": "2.0",
-                "method": method,
-                "params": params,
-                "id": request_id,
-            },
+            json=request_payload,
+        )
+        logger.debug(
+            "Saby JSON-RPC raw response: method=%s status=%s body=%s",
+            method,
+            response.status_code,
+            response.text,
         )
 
         try:
