@@ -268,7 +268,6 @@ def approve_document(request):
                 ApprovalItem.Status.QUEUED,
                 ApprovalItem.Status.RUNNING,
                 ApprovalItem.Status.PENDING,
-                ApprovalItem.Status.OVERDUE,
             ),
         ).first()
         if active_item:
