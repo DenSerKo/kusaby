@@ -193,12 +193,15 @@ def approve_document_task(item_id: int) -> None:
         )
 
     else:
-        _finish_item(
-            item_id,
-            ApprovalItem.Status.SUCCEEDED,
-            "Saby обработал запрос на утверждение.",
-            "",
-        )
+        # ExecuteAction accepted the command; delayed signing is monitored separately.
+        item = ApprovalItem.objects.get(pk=item_id)
+        item.status = ApprovalItem.Status.PENDING
+        item.accepted_at = timezone.now()
+        item.message = "Saby принял запрос. Ожидаем подтверждения подписания."
+        item.details = ""
+        item.save(update_fields=["status", "accepted_at", "message", "details", "updated_at"])
+        item.run.status = ApprovalRun.Status.PENDING
+        item.run.save(update_fields=["status"])
 
 
 def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
@@ -210,10 +213,15 @@ def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
         item.details = details[:4000]
         item.save(update_fields=["status", "message", "details", "updated_at"])
 
-        item.run.status = (
-            ApprovalRun.Status.COMPLETED
-            if status == ApprovalItem.Status.SUCCEEDED
-            else ApprovalRun.Status.FAILED
-        )
-        item.run.finished_at = now
-        item.run.save(update_fields=["status", "finished_at"])
+        if status == ApprovalItem.Status.PENDING:
+            item.run.status = ApprovalRun.Status.PENDING
+            item.run.finished_at = None
+            item.run.save(update_fields=["status", "finished_at"])
+        else:
+            item.run.status = (
+                ApprovalRun.Status.COMPLETED
+                if status == ApprovalItem.Status.SUCCEEDED
+                else ApprovalRun.Status.FAILED
+            )
+            item.run.finished_at = now
+            item.run.save(update_fields=["status", "finished_at"])
