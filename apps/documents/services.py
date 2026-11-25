@@ -168,7 +168,24 @@ async def get_monitoring_events_page(
     if last_event_document_id:
         api_filter["ИдентификаторДокумента"] = last_event_document_id
     if last_organization:
-        api_filter["НашаОрганизация"] = last_organization
+        if last_organization.get("СвЮЛ"):
+            legal = last_organization["СвЮЛ"]
+            api_filter["НашаОрганизация"] = {
+                "СвЮЛ": {
+                    key: legal[key]
+                    for key in ("ИНН", "КПП", "КодФилиала")
+                    if legal.get(key)
+                }
+            }
+        elif last_organization.get("СвФЛ"):
+            individual = last_organization["СвФЛ"]
+            api_filter["НашаОрганизация"] = {
+                "СвФЛ": {
+                    key: individual[key]
+                    for key in ("ИНН", "КодФилиала")
+                    if individual.get(key)
+                }
+            }
 
     async with DocumentsClient(token=token) as client:
         response = await client.get_events({"Фильтр": api_filter})
