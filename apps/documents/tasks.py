@@ -293,7 +293,7 @@ def _sync_connection_events(connection, overdue_after) -> None:
             item.status = ApprovalItem.Status.SUCCEEDED
             item.message = "Документ успешно подписан в Saby."
             item.details = ""
-            item.save(update_fields=["status", "message", "details", "updated_at"])
+            item.save(update_fields=["status", "message", "details", "saby_url", "updated_at"])
             item.run.status = ApprovalRun.Status.COMPLETED
             item.run.finished_at = timezone.now()
             item.run.save(update_fields=["status", "finished_at"])
