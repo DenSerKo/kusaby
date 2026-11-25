@@ -275,14 +275,20 @@ def _sync_connection_events(connection, overdue_after) -> None:
         )
         documents = page["documents"]
         for document in documents:
-            if (document.get("state") or {}).get("Название") != "Выполнение завершено успешно":
-                continue
             item = ApprovalItem.objects.filter(
                 connection=connection,
                 document_id=document.get("id"),
                 status__in=(ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE),
             ).first()
             if item is None:
+                continue
+            update_fields = []
+            if document.get("saby_url") and item.saby_url != document["saby_url"]:
+                item.saby_url = document["saby_url"]
+                update_fields.append("saby_url")
+            if (document.get("state") or {}).get("Название") != "Выполнение завершено успешно":
+                if update_fields:
+                    item.save(update_fields=update_fields + ["updated_at"])
                 continue
             item.status = ApprovalItem.Status.SUCCEEDED
             item.message = "Документ успешно подписан в Saby."
