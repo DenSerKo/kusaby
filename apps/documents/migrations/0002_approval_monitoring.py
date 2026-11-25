@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="approvalitem",
             constraint=models.UniqueConstraint(
-                condition=Q(status__in=("queued", "running", "pending", "overdue")),
+                condition=Q(status__in=("queued", "running", "pending")),
                 fields=("connection", "document_id"),
                 name="unique_active_approval_per_document",
             ),
