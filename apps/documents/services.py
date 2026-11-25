@@ -146,3 +146,64 @@ async def approve_saby_document(
         "prepare_result": normalize_result(prepare_response),
         "execute_result": normalize_result(execute_response),
     }
+
+
+async def get_monitoring_events_page(
+    token: str,
+    *,
+    from_datetime: str,
+    last_event_id: str | None = None,
+    last_event_datetime: str | None = None,
+    last_event_document_id: str | None = None,
+    last_organization: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Получает одну страницу событий без пользовательских фильтров."""
+    api_filter: dict[str, Any] = {
+        "ДатаВремяС": last_event_datetime or from_datetime,
+        "Навигация": {"РазмерСтраницы": 50},
+        "ПолныйСертификатЭП": "Нет",
+    }
+    if last_event_id:
+        api_filter["ИдентификаторСобытия"] = last_event_id
+    if last_event_document_id:
+        api_filter["ИдентификаторДокумента"] = last_event_document_id
+    if last_organization:
+        api_filter["НашаОрганизация"] = last_organization
+
+    async with DocumentsClient(token=token) as client:
+        response = await client.get_events({"Фильтр": api_filter})
+
+    result = response.get("result") or {}
+    raw_documents = result.get("Документ") or []
+    if isinstance(raw_documents, dict):
+        raw_documents = [raw_documents]
+    if not isinstance(raw_documents, list):
+        raw_documents = []
+
+    documents = [
+        parse_document_details(document)
+        for document in raw_documents
+        if isinstance(document, dict)
+    ]
+    navigation = result.get("Навигация") or {}
+
+    last_raw_document = next(
+        (document for document in reversed(raw_documents) if isinstance(document, dict)),
+        None,
+    )
+    raw_events = (last_raw_document or {}).get("Событие") or []
+    if isinstance(raw_events, dict):
+        raw_events = [raw_events]
+    last_raw_event = raw_events[-1] if raw_events else {}
+    organization = (last_raw_document or {}).get("НашаОрганизация") or {}
+
+    return {
+        "documents": documents,
+        "has_more": navigation.get("ЕстьЕще") == "Да",
+        "cursor": {
+            "event_id": last_raw_event.get("Идентификатор"),
+            "event_datetime": last_raw_event.get("ДатаВремя"),
+            "document_id": (last_raw_document or {}).get("Идентификатор"),
+            "organization": organization,
+        },
+    }
