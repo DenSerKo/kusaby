@@ -77,7 +77,7 @@ class ApprovalItem(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("connection", "document_id"),
-                condition=Q(status__in=("queued", "running", "pending", "overdue")),
+                condition=Q(status__in=("queued", "running", "pending")),
                 name="unique_active_approval_per_document",
             ),
         ]
