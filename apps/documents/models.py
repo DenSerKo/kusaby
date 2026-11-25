@@ -94,4 +94,5 @@ class SabyEventsCursor(models.Model):
     last_event_id = models.CharField(max_length=255, blank=True)
     last_event_datetime = models.CharField(max_length=32, blank=True)
     last_event_document_id = models.CharField(max_length=255, blank=True)
+    last_organization = models.JSONField(default=dict, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
