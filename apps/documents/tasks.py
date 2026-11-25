@@ -77,43 +77,121 @@ def approve_document_task(item_id: int) -> None:
             prepare_params,
             execute_params,
         )
-    except (httpx.TimeoutException, httpx.TransportError, SabyResponseError) as exc:
-        logger.exception("Неизвестен результат утверждения документа %s", item.document_id)
+
+    except SabyAPIError as exc:
+        # JSON-RPC error is an explicit rejection returned by Saby.
+        error_details = []
+        if exc.method:
+            error_details.append(f"Метод: {exc.method}")
+        if exc.code is not None:
+            error_details.append(f"Код: {exc.code}")
+        if exc.details:
+            error_details.append(str(exc.details))
+
+        logger.warning(
+            "Saby rejected approval: document=%s method=%s code=%s message=%s details=%s",
+            item.document_id,
+            exc.method,
+            exc.code,
+            exc.message,
+            exc.details,
+        )
         _finish_item(
             item_id,
-            ApprovalItem.Status.UNKNOWN,
-            "Не удалось достоверно определить результат. Проверьте документ в Saby перед повторным запуском.",
-            str(exc),
+            ApprovalItem.Status.FAILED,
+            f"СБИС отклонил операцию: {exc.message}",
+            "\\n".join(error_details),
         )
+
     except httpx.HTTPStatusError as exc:
-        logger.exception("HTTP-ошибка при утверждении документа %s", item.document_id)
+        body = exc.response.text.strip()
+        details = body[:4000] if body else str(exc)
         is_server_error = exc.response.status_code >= 500
+        logger.warning(
+            "Saby returned HTTP error: document=%s status=%s body=%s",
+            item.document_id,
+            exc.response.status_code,
+            details,
+        )
         _finish_item(
             item_id,
             ApprovalItem.Status.UNKNOWN if is_server_error else ApprovalItem.Status.FAILED,
             (
-                "Saby вернул ошибку сервера. Проверьте документ перед повторным запуском."
+                "СБИС вернул ошибку сервера. Проверьте документ в Saby перед повторным запуском."
                 if is_server_error
-                else "Saby отклонил запрос на утверждение."
+                else f"СБИС отклонил запрос (HTTP {exc.response.status_code})."
             ),
-            str(exc),
+            details,
         )
-    except (SabyAPIError, httpx.HTTPError, RuntimeError, ValueError) as exc:
-        logger.exception("Не удалось утвердить документ %s", item.document_id)
-        _finish_item(
-            item_id,
-            ApprovalItem.Status.FAILED,
-            "Saby не подтвердил выполнение утверждения.",
-            str(exc),
+
+    except (httpx.TimeoutException, httpx.TransportError) as exc:
+        logger.warning(
+            "Saby connection failed during approval: document=%s error=%s",
+            item.document_id,
+            exc,
         )
-    except Exception as exc:
-        logger.exception("Не удалось определить результат утверждения %s", item.document_id)
         _finish_item(
             item_id,
             ApprovalItem.Status.UNKNOWN,
-            "Результат операции неизвестен. Проверьте документ в Saby перед повторным запуском.",
+            "Не удалось достоверно определить результат из-за сетевой ошибки. "
+            "Проверьте документ в Saby перед повторным запуском.",
             str(exc),
         )
+
+    except SabyResponseError as exc:
+        logger.warning(
+            "Invalid Saby response during approval: document=%s error=%s",
+            item.document_id,
+            exc,
+        )
+        _finish_item(
+            item_id,
+            ApprovalItem.Status.UNKNOWN,
+            "СБИС вернул ответ, который приложение не смогло корректно обработать. "
+            "Проверьте документ в Saby перед повторным запуском.",
+            str(exc),
+        )
+
+    except (RuntimeError, ValueError) as exc:
+        logger.error(
+            "Approval configuration or validation error: document=%s error=%s",
+            item.document_id,
+            exc,
+        )
+        _finish_item(
+            item_id,
+            ApprovalItem.Status.FAILED,
+            "Не удалось подготовить утверждение. Проверьте настройки приложения.",
+            str(exc),
+        )
+
+    except httpx.HTTPError as exc:
+        logger.warning(
+            "HTTP client error during approval: document=%s error=%s",
+            item.document_id,
+            exc,
+        )
+        _finish_item(
+            item_id,
+            ApprovalItem.Status.UNKNOWN,
+            "Не удалось достоверно определить результат запроса. "
+            "Проверьте документ в Saby перед повторным запуском.",
+            str(exc),
+        )
+
+    except Exception as exc:
+        # Unexpected programming/runtime errors still need a traceback for developers.
+        logger.exception(
+            "Unexpected error during approval: document=%s",
+            item.document_id,
+        )
+        _finish_item(
+            item_id,
+            ApprovalItem.Status.UNKNOWN,
+            "Произошла внутренняя ошибка. Результат операции требует проверки в Saby.",
+            str(exc),
+        )
+
     else:
         _finish_item(
             item_id,
