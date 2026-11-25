@@ -60,7 +60,7 @@ class DocumentFiltersTests(SimpleTestCase):
         )
         self.assertEqual(
             [document["id"] for document in result],
-            ["org-match", "wrong-kpp", "approved"],
+            ["org-match", "wrong-kpp", "approved", "other-action"],
         )
 
     def test_counterparty_filter_supports_inn_and_kpp(self):
@@ -71,7 +71,7 @@ class DocumentFiltersTests(SimpleTestCase):
         )
         self.assertEqual(
             [document["id"] for document in result],
-            ["org-match", "approved"],
+            ["org-match", "approved", "other-action"],
         )
 
     def test_counterparty_filter_supports_individual_inn_without_kpp(self):
