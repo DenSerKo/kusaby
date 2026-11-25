@@ -322,12 +322,20 @@ def approval_status(request, item_id: int):
         context = {
             "success": True,
             "message": item.message,
+            "saby_url": item.saby_url,
+        }
+    elif item.status in (ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE):
+        context = {
+            "pending": True,
+            "message": item.message,
+            "saby_url": item.saby_url,
         }
     else:
         context = {
             "success": False,
             "message": item.message,
             "details": item.details,
+            "saby_url": item.saby_url,
         }
 
     return render(
