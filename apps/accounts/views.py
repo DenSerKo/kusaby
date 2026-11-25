@@ -23,7 +23,12 @@ logger = logging.getLogger(__name__)
 @login_required
 def saby_authorize(request):
     if SabyConnection.objects.filter(user=request.user).exists():
-        return redirect("core:index")
+        # A stale page may still contain the connect button. Return the
+        # callback page so the popup closes and the opener refreshes.
+        return _callback_page(
+            request,
+            "Saby уже подключён. Это окно можно закрыть.",
+        )
 
     if not settings.SABY_CLIENT_ID or not settings.SABY_CLIENT_SECRET:
         messages.error(request, "Не настроены параметры OAuth приложения Saby.")
