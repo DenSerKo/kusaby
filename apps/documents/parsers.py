@@ -61,6 +61,30 @@ def parse_party(party: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+
+def _get_saby_url(document: dict[str, Any]) -> str | None:
+    direct_url = (
+        document.get("СсылкаДляНашаОрганизация")
+        or document.get("СсылкаДляКонтрагент")
+    )
+    if direct_url:
+        return direct_url
+
+    events = document.get("Событие") or []
+    if isinstance(events, dict):
+        events = [events]
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        attachments = event.get("Вложение") or []
+        if isinstance(attachments, dict):
+            attachments = [attachments]
+        for attachment in attachments:
+            if isinstance(attachment, dict) and attachment.get("СсылкаВКабинет"):
+                return attachment["СсылкаВКабинет"]
+    return None
+
+
 def parse_document(document: dict[str, Any]) -> dict[str, Any]:
     counterparty = parse_party(document.get("Контрагент"))
     organization = parse_party(document.get("НашаОрганизация"))
@@ -77,12 +101,7 @@ def parse_document(document: dict[str, Any]) -> dict[str, Any]:
         "organization": organization,
         "regulation": regulation.get("Название"),
         "state": document.get("Состояние"),
-        "saby_url": (
-            document.get("СсылкаДляНашаОрганизация")
-            or document.get("Событие", [{}])[0].get("Вложение", [{}])[0].get("СсылкаВКабинет")
-            if isinstance(document.get("Событие"), list) and document.get("Событие")
-            else document.get("СсылкаДляНашаОрганизация") or document.get("СсылкаДляКонтрагент")
-        ),
+        "saby_url": _get_saby_url(document),
     }
 
 
