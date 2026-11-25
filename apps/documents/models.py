@@ -7,6 +7,7 @@ class ApprovalRun(models.Model):
     class Status(models.TextChoices):
         QUEUED = "queued", "В очереди"
         RUNNING = "running", "Выполняется"
+        PENDING = "pending", "Ожидает подтверждения"
         COMPLETED = "completed", "Завершён"
         FAILED = "failed", "Ошибка"
 
@@ -76,7 +77,7 @@ class ApprovalItem(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("connection", "document_id"),
-                condition=Q(status__in=("queued", "running", "pending")),
+                condition=Q(status__in=("queued", "running", "pending", "overdue")),
                 name="unique_active_approval_per_document",
             ),
         ]
