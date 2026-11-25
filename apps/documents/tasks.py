@@ -214,7 +214,7 @@ def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
         item.status = status
         item.message = message
         item.details = details[:4000]
-        item.save(update_fields=["status", "message", "details", "updated_at"])
+        item.save(update_fields=["status", "message", "details", "saby_url", "updated_at"])
 
         if status == ApprovalItem.Status.PENDING:
             item.run.status = ApprovalRun.Status.PENDING
