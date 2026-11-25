@@ -7,8 +7,16 @@
     >
         <p class="notification" role="status">{{ message }}</p>
     </div>
+{% elif pending %}
+    <div class="notification" role="status">
+        <p>{{ message }}</p>
+        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
+    </div>
 {% elif success %}
-    <p class="notification notification--success" role="status">{{ message }}</p>
+    <div class="notification notification--success" role="status">
+        <p>{{ message }}</p>
+        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
+    </div>
 {% else %}
     <div class="approval-error" role="alert">
         <p class="notification notification--error">{{ message }}</p>
