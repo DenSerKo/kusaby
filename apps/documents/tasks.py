@@ -277,28 +277,27 @@ def _sync_connection_events(connection, overdue_after) -> None:
         )
         documents = page["documents"]
         for document in documents:
-            item = ApprovalItem.objects.filter(
+            items = ApprovalItem.objects.filter(
                 connection=connection,
                 document_id=document.get("id"),
                 status__in=(ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE),
-            ).first()
-            if item is None:
-                continue
-            update_fields = []
-            if document.get("saby_url") and item.saby_url != document["saby_url"]:
-                item.saby_url = document["saby_url"]
-                update_fields.append("saby_url")
-            if (document.get("state") or {}).get("Название") != "Выполнение завершено успешно":
-                if update_fields:
-                    item.save(update_fields=update_fields + ["updated_at"])
-                continue
-            item.status = ApprovalItem.Status.SUCCEEDED
-            item.message = "Документ успешно подписан в Saby."
-            item.details = ""
-            item.save(update_fields=["status", "message", "details", "saby_url", "updated_at"])
-            item.run.status = ApprovalRun.Status.COMPLETED
-            item.run.finished_at = timezone.now()
-            item.run.save(update_fields=["status", "finished_at"])
+            ).select_related("run")
+            for item in items:
+                update_fields = []
+                if document.get("saby_url") and item.saby_url != document["saby_url"]:
+                    item.saby_url = document["saby_url"]
+                    update_fields.append("saby_url")
+                if (document.get("state") or {}).get("Название") != "Выполнение завершено успешно":
+                    if update_fields:
+                        item.save(update_fields=update_fields + ["updated_at"])
+                    continue
+                item.status = ApprovalItem.Status.SUCCEEDED
+                item.message = "Документ успешно подписан в Saby."
+                item.details = ""
+                item.save(update_fields=["status", "message", "details", "saby_url", "updated_at"])
+                item.run.status = ApprovalRun.Status.COMPLETED
+                item.run.finished_at = timezone.now()
+                item.run.save(update_fields=["status", "finished_at"])
 
         next_cursor = page["cursor"]
         if next_cursor["event_id"] and next_cursor["event_datetime"] and next_cursor["document_id"]:
