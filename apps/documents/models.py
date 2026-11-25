@@ -41,8 +41,10 @@ class ApprovalItem(models.Model):
     class Status(models.TextChoices):
         QUEUED = "queued", "В очереди"
         RUNNING = "running", "Выполняется"
+        PENDING = "pending", "Ожидает подтверждения"
         SUCCEEDED = "succeeded", "Утверждён"
         FAILED = "failed", "Ошибка"
+        OVERDUE = "overdue", "Просрочен"
         UNKNOWN = "unknown", "Требует проверки"
 
     run = models.ForeignKey(
@@ -65,6 +67,8 @@ class ApprovalItem(models.Model):
     )
     message = models.TextField(blank=True)
     details = models.TextField(blank=True)
+    saby_url = models.URLField(max_length=2000, blank=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -72,7 +76,21 @@ class ApprovalItem(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("connection", "document_id"),
-                condition=Q(status__in=("queued", "running")),
+                condition=Q(status__in=("queued", "running", "pending")),
                 name="unique_active_approval_per_document",
             ),
         ]
+
+
+class SabyEventsCursor(models.Model):
+    """Контрольная точка общей синхронизации событий одного подключения Saby."""
+
+    connection = models.OneToOneField(
+        "accounts.SabyConnection",
+        on_delete=models.CASCADE,
+        related_name="events_cursor",
+    )
+    last_event_id = models.CharField(max_length=255, blank=True)
+    last_event_datetime = models.CharField(max_length=32, blank=True)
+    last_event_document_id = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
