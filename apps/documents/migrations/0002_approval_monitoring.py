@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="approvalitem",
             constraint=models.UniqueConstraint(
-                condition=Q(status__in=("queued", "running", "pending")),
+                condition=Q(status__in=("queued", "running", "pending", "overdue")),
                 fields=("connection", "document_id"),
                 name="unique_active_approval_per_document",
             ),
@@ -56,6 +56,7 @@ class Migration(migrations.Migration):
                 ("last_event_id", models.CharField(blank=True, max_length=255)),
                 ("last_event_datetime", models.CharField(blank=True, max_length=32)),
                 ("last_event_document_id", models.CharField(blank=True, max_length=255)),
+                ("last_organization", models.JSONField(blank=True, default=dict)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("connection", models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name="events_cursor", to="accounts.sabyconnection")),
             ],
