@@ -11,6 +11,9 @@
             {% endif %}
         </div>
         <p class="text-muted">{{ event.name }}</p>
+        {% if event.saby_url %}
+            <a href="{{ event.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть в Saby</a>
+        {% endif %}
         {% if event.attachments %}
             <ul class="document-attachments">
                 {% for attachment in event.attachments %}
