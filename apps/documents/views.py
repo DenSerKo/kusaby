@@ -264,7 +264,12 @@ def approve_document(request):
         active_item = ApprovalItem.objects.filter(
             connection=connection,
             document_id=document_id,
-            status__in=(ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING),
+            status__in=(
+                ApprovalItem.Status.QUEUED,
+                ApprovalItem.Status.RUNNING,
+                ApprovalItem.Status.PENDING,
+                ApprovalItem.Status.OVERDUE,
+            ),
         ).first()
         if active_item:
             return render(request, "documents/partials/_approve_result.html", {
