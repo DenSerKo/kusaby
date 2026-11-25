@@ -10,6 +10,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name="approvalrun",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("queued", "В очереди"),
+                    ("running", "Выполняется"),
+                    ("pending", "Ожидает подтверждения"),
+                    ("completed", "Завершён"),
+                    ("failed", "Ошибка"),
+                ],
+                default="queued",
+                max_length=16,
+            ),
+        ),
         migrations.AddField(
             model_name="approvalitem",
             name="saby_url",
