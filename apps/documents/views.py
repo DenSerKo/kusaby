@@ -348,3 +348,24 @@ def approval_status(request, item_id: int):
         "documents/partials/_approve_result.html",
         context,
     )
+
+
+@login_required
+@require_GET
+def approval_items(request):
+    """Показывает операции, требующие внимания пользователя."""
+    items = (
+        ApprovalItem.objects
+        .filter(
+            run__user=request.user,
+            status__in=(
+                ApprovalItem.Status.PENDING,
+                ApprovalItem.Status.OVERDUE,
+                ApprovalItem.Status.FAILED,
+                ApprovalItem.Status.UNKNOWN,
+            ),
+        )
+        .select_related("run")
+        .order_by("-created_at")
+    )
+    return render(request, "documents/approval_items.html", {"items": items})
