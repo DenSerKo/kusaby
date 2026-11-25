@@ -245,6 +245,19 @@ def sync_approval_events() -> None:
 
 
 def _sync_connection_events(connection, overdue_after) -> None:
+    cutoff = timezone.now() - overdue_after
+    stale_items = ApprovalItem.objects.filter(
+        connection=connection,
+        status=ApprovalItem.Status.PENDING,
+        accepted_at__lte=cutoff,
+    )
+    for item in stale_items.select_related("run"):
+        item.status = ApprovalItem.Status.OVERDUE
+        item.message = "Saby пока не подтвердил подписание. Проверьте документ в Saby."
+        item.save(update_fields=["status", "message", "updated_at"])
+        item.run.status = ApprovalRun.Status.PENDING
+        item.run.save(update_fields=["status"])
+
     pending_items = ApprovalItem.objects.filter(
         connection=connection,
         status__in=(ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE),
@@ -315,15 +328,3 @@ def _sync_connection_events(connection, overdue_after) -> None:
         if not page["has_more"] or not documents:
             break
 
-    cutoff = timezone.now() - overdue_after
-    stale_items = ApprovalItem.objects.filter(
-        connection=connection,
-        status=ApprovalItem.Status.PENDING,
-        accepted_at__lte=cutoff,
-    )
-    for item in stale_items.select_related("run"):
-        item.status = ApprovalItem.Status.OVERDUE
-        item.message = "Saby пока не подтвердил подписание. Проверьте документ в Saby."
-        item.save(update_fields=["status", "message", "updated_at"])
-        item.run.status = ApprovalRun.Status.PENDING
-        item.run.save(update_fields=["status"])
