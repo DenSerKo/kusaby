@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 import httpx
 from asgiref.sync import async_to_sync
@@ -232,7 +233,7 @@ def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
 @db_periodic_task(crontab(minute="*/5"))
 def sync_approval_events() -> None:
     """Сверяет ожидающие операции с общим потоком событий Saby."""
-    overdue_after = timezone.timedelta(minutes=30)
+    overdue_after = timedelta(minutes=30)
     for connection in SabyConnection.objects.iterator():
         try:
             _sync_connection_events(connection, overdue_after)
