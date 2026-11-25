@@ -6,7 +6,7 @@
     <h1>Главная</h1>
     <p>Вы вошли в сервис как {{ request.user.get_username }}.</p>
 
-    {% if request.session.saby_token %}
+    {% if saby_connected %}
         <p>Saby подключён.</p>
         <form method="post" action="{% url 'accounts:saby_disconnect' %}">
             {% csrf_token %}
