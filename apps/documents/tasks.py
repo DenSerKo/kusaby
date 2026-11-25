@@ -325,6 +325,12 @@ def _sync_connection_events(connection, overdue_after) -> None:
                 "last_organization",
                 "updated_at",
             ])
-        if not page["has_more"] or not documents:
+        if (
+            not page["has_more"]
+            or not documents
+            or not next_cursor["event_id"]
+            or not next_cursor["event_datetime"]
+            or not next_cursor["document_id"]
+        ):
             break
 
