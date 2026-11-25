@@ -233,7 +233,7 @@ def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
 @db_periodic_task(crontab(minute="*/5"))
 def sync_approval_events() -> None:
     """Сверяет ожидающие операции с общим потоком событий Saby."""
-    overdue_after = timedelta(minutes=30)
+    overdue_after = timedelta(minutes=settings.SABY_APPROVAL_TIMEOUT_MINUTES)
     for connection in SabyConnection.objects.iterator():
         try:
             _sync_connection_events(connection, overdue_after)
@@ -257,8 +257,10 @@ def _sync_connection_events(connection, overdue_after) -> None:
         start_datetime = cursor.last_event_datetime
     else:
         earliest = pending_items.order_by("accepted_at").first()
+        # Small overlap protects against events created just before the API
+        # accepted_at timestamp was persisted locally.
         start_datetime = timezone.localtime(
-            earliest.accepted_at or earliest.created_at
+            (earliest.accepted_at or earliest.created_at) - timedelta(minutes=5)
         ).strftime("%d.%m.%Y %H.%M.%S")
 
     token = connection.get_access_token()
