@@ -195,7 +195,12 @@ async def get_monitoring_events_page(
     if isinstance(raw_events, dict):
         raw_events = [raw_events]
     last_raw_event = raw_events[-1] if raw_events else {}
-    organization = (last_raw_document or {}).get("НашаОрганизация") or {}
+    raw_organization = (last_raw_document or {}).get("НашаОрганизация") or {}
+    organization = {
+        key: raw_organization[key]
+        for key in ("СвЮЛ", "СвФЛ")
+        if raw_organization.get(key)
+    }
 
     return {
         "documents": documents,
