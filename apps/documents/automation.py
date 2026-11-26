@@ -91,12 +91,26 @@ def process_approval_rule_task(run_id: int) -> None:
         scan_from = rule.last_checked_at or (
             rule.created_at - timedelta(minutes=5)
         )
+        amount_min = _parse_amount(criteria.get("amount_min"))
+        amount_max = _parse_amount(criteria.get("amount_max"))
+        if amount_min is not None and amount_max is not None and amount_min > amount_max:
+            raise ValueError("Минимальная сумма в правиле больше максимальной.")
+
+        inn = str(criteria.get("counterparty_inn") or "").strip()
+        kpp = str(criteria.get("counterparty_kpp") or "").strip()
+        if inn and (not inn.isascii() or not inn.isdigit() or len(inn) not in (10, 12)):
+            raise ValueError("ИНН в правиле должен содержать 10 или 12 цифр.")
+        if kpp and (not kpp.isascii() or not kpp.isdigit() or len(kpp) != 9):
+            raise ValueError("КПП в правиле должен содержать 9 цифр.")
+        if kpp and len(inn) != 10:
+            raise ValueError("КПП можно указать только вместе с 10-значным ИНН организации.")
+
         filters = EventsFilter(
             from_datetime=timezone.localtime(scan_from).strftime("%d.%m.%Y %H.%M.%S"),
-            amount_min=_parse_amount(criteria.get("amount_min")),
-            amount_max=_parse_amount(criteria.get("amount_max")),
-            counterparty_inn=criteria.get("counterparty_inn") or None,
-            counterparty_kpp=criteria.get("counterparty_kpp") or None,
+            amount_min=amount_min,
+            amount_max=amount_max,
+            counterparty_inn=inn or None,
+            counterparty_kpp=kpp or None,
         )
 
         token = run.connection.get_access_token()
