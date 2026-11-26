@@ -1,7 +1,12 @@
 from decimal import Decimal
 
-from django.test import SimpleTestCase
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
+from django.test import SimpleTestCase, TestCase
 
+from apps.accounts.models import SabyConnection
+
+from .automation import _parse_amount
 from .filters import (
     EventsFilter,
     filter_documents,
@@ -166,11 +171,6 @@ class SabyDocumentLinkTests(SimpleTestCase):
         )
 
 
-from django.contrib.auth import get_user_model
-from django.db import IntegrityError, transaction
-from django.test import TestCase
-
-from apps.accounts.models import SabyConnection
 from .models import ApprovalItem, ApprovalRule, ApprovalRun
 from .tasks import _refresh_run_status
 
@@ -283,3 +283,15 @@ class ApprovalAutomationModelTests(TestCase):
         _refresh_run_status(self.run.pk)
         self.run.refresh_from_db()
         self.assertEqual(self.run.status, ApprovalRun.Status.COMPLETED)
+
+
+
+class ApprovalRuleCriteriaTests(SimpleTestCase):
+    def test_amount_parser_accepts_decimal_comma(self):
+        from decimal import Decimal
+
+        self.assertEqual(_parse_amount("1250,50"), Decimal("1250.50"))
+
+    def test_amount_parser_rejects_negative_amount(self):
+        with self.assertRaises(ValueError):
+            _parse_amount("-1")
