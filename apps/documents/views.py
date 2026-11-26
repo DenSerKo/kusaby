@@ -280,6 +280,7 @@ def approve_document(request):
         return render(request, "documents/partials/_approve_result.html", {
             "success": False,
             "message": "Подключение Saby устарело. Отключите и подключите Saby заново.",
+            "document_id": document_id,
             "details": None,
         }, status=409)
 
@@ -329,6 +330,7 @@ def approve_document(request):
         return render(request, "documents/partials/_approve_result.html", {
             "success": False,
             "message": item.message,
+            "document_id": document_id,
             "details": None,
         }, status=503)
 
