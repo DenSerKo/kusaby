@@ -16,7 +16,7 @@ from apps.accounts.models import SabyConnection
 from apps.documents.filters import EventsFilter
 from apps.documents.models import ApprovalItem, ApprovalRun
 from apps.documents.services import get_events, get_organizations
-from apps.documents.tasks import approve_document_task
+from apps.documents.tasks import approve_document_task, _refresh_run_status
 from clients.exceptions import SabyAPIError, SabyResponseError
 
 logger = logging.getLogger(__name__)
@@ -364,6 +364,7 @@ def approval_status(request, item_id: int):
         item.status = ApprovalItem.Status.OVERDUE
         item.message = "Saby пока не подтвердил подписание за отведённое время. Проверьте документ в Saby."
         item.save(update_fields=["status", "message", "updated_at"])
+        _refresh_run_status(item.run_id)
 
     if item.status in (ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING):
         context = {
