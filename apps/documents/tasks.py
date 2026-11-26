@@ -273,8 +273,7 @@ def _sync_connection_events(connection, overdue_after) -> None:
         item.status = ApprovalItem.Status.OVERDUE
         item.message = "Saby пока не подтвердил подписание. Проверьте документ в Saby."
         item.save(update_fields=["status", "message", "updated_at"])
-        item.run.status = ApprovalRun.Status.PENDING
-        item.run.save(update_fields=["status"])
+        _refresh_run_status(item.run_id)
 
     pending_items = ApprovalItem.objects.filter(
         connection=connection,
