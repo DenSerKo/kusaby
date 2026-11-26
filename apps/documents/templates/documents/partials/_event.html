@@ -26,11 +26,46 @@
     </div>
     <div class="amount"><p class="text-important">{{ event.amount }}</p></div>
     <div class="action">
-        <form hx-post="{% url 'documents:approve-document' %}" hx-target="#approval-feedback-{{ event.id }}" hx-swap="innerHTML">
-            {% csrf_token %}
-            <input type="hidden" name="document_id" value="{{ event.id }}">
-            <button type="submit">Утвердить</button>
-        </form>
+        {% if event.approval_item %}
+            {% with approval=event.approval_item %}
+                {% if approval.status == "pending" or approval.status == "queued" or approval.status == "running" %}
+                    <div class="approval-pending"
+                         hx-get="{% url 'documents:approval-status' approval.pk %}"
+                         hx-trigger="load, every 30s"
+                         hx-swap="outerHTML">
+                        <p class="notification" role="status">
+                            {% if approval.status == "pending" %}
+                                Ожидает подписания в Saby
+                            {% else %}
+                                Запрос обрабатывается
+                            {% endif %}
+                        </p>
+                    </div>
+                {% elif approval.status == "overdue" %}
+                    <div class="approval-overdue">
+                        <p class="notification notification--error" role="status">Не подтверждено за отведённое время</p>
+                        <a href="{% url 'documents:approvals' %}">Проверить результат</a>
+                        {% if approval.saby_url %}
+                            <a href="{{ approval.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть в Saby</a>
+                        {% endif %}
+                    </div>
+                {% elif approval.status == "succeeded" %}
+                    <p class="notification notification--success" role="status">Подписан</p>
+                {% elif approval.status == "unknown" %}
+                    <p class="notification notification--error" role="status">Результат требует проверки</p>
+                    {% if approval.saby_url %}<a href="{{ approval.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть в Saby</a>{% endif %}
+                {% elif approval.status == "failed" %}
+                    <p class="notification notification--error" role="status">Saby отклонил запрос</p>
+                    {% if approval.saby_url %}<a href="{{ approval.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть в Saby</a>{% endif %}
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            <form hx-post="{% url 'documents:approve-document' %}" hx-target="#approval-feedback-{{ event.id }}" hx-swap="innerHTML">
+                {% csrf_token %}
+                <input type="hidden" name="document_id" value="{{ event.id }}">
+                <button type="submit">Утвердить</button>
+            </form>
+        {% endif %}
     </div>
     <div class="approval-feedback" id="approval-feedback-{{ event.id }}" aria-live="polite"></div>
 </article>
