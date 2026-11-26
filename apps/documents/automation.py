@@ -119,7 +119,7 @@ def process_approval_rule_task(run_id: int) -> None:
         # Do not automatically process the same document twice under one rule.
         processed_ids = set(
             ApprovalItem.objects
-            .filter(run__rule=rule)
+            .filter(rule=rule)
             .values_list("document_id", flat=True)
         )
         candidates = [
@@ -133,6 +133,7 @@ def process_approval_rule_task(run_id: int) -> None:
                 with transaction.atomic():
                     item = ApprovalItem.objects.create(
                         run=run,
+                        rule=rule,
                         connection=run.connection,
                         document_id=document["id"],
                         saby_url=document.get("saby_url") or "",
