@@ -235,6 +235,7 @@ class ApprovalAutomationModelTests(TestCase):
             rule=self.rule,
             connection=self.connection,
             document_id="document-1",
+            status=ApprovalItem.Status.SUCCEEDED,
         )
         other_item = ApprovalItem.objects.create(
             run=other_run,
