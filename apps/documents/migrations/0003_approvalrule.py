@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("name", models.CharField(max_length=100)),
-                ("is_active", models.BooleanField(default=True)),
+                ("is_active", models.BooleanField(default=False)),
                 ("interval_minutes", models.PositiveSmallIntegerField(
                     choices=[(5, "Каждые 5 минут"), (15, "Каждые 15 минут"), (30, "Каждые 30 минут"), (60, "Каждый час")],
                     default=5,
