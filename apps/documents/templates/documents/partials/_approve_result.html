@@ -1,39 +1,25 @@
-{% if queued %}
-    <div
-        class="approval-pending"
-        hx-get="{% url 'documents:approval-status' item_id %}"
-        hx-trigger="every 2s"
-        hx-swap="outerHTML"
-    >
-        <p class="notification" role="status">{{ message }}</p>
-    </div>
-{% elif pending and not overdue %}
-    <div
-        class="approval-pending"
-        hx-get="{% url 'documents:approval-status' item_id %}"
-        hx-trigger="every 30s"
-        hx-swap="outerHTML"
-    >
-        <p class="notification" role="status">{{ message }}</p>
-        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
-    </div>
-{% elif overdue %}
-    <div class="approval-overdue" role="status"
-         hx-get="{% url 'documents:approval-status' item_id %}"
-         hx-trigger="every 60s"
-         hx-swap="outerHTML">
-        <p class="notification notification--error">{{ message }}</p>
-        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
-    </div>
-{% elif success %}
-    <div class="notification notification--success" role="status">
-        <p>{{ message }}</p>
-        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
-    </div>
-{% else %}
-    <div class="approval-error" role="alert">
-        <p class="notification notification--error">{{ message }}</p>
-        {% if details %}<div class="approval-details">{{ details|linebreaksbr }}</div>{% endif %}
-        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
+{% if document_id and action_label %}
+    <div id="approval-action-{{ document_id }}" class="action" hx-swap-oob="outerHTML">
+        <span class="approval-state{% if action_success %} approval-state--success{% endif %}">{{ action_label }}</span>
     </div>
 {% endif %}
+<div class="approval-feedback" id="approval-feedback-{{ document_id }}" aria-live="polite">
+    {% if queued or pending %}
+        <div
+            hx-get="{% url 'documents:approval-status' item_id %}"
+            hx-trigger="{% if queued %}every 2s{% else %}every 30s{% endif %}"
+            hx-swap="outerHTML">
+            <span class="text-muted">Проверяем результат подписания…</span>
+        </div>
+        {% if overdue %}
+            <p class="notification notification--error" role="status">{{ message }}</p>
+        {% endif %}
+    {% elif success %}
+        <p class="notification notification--success" role="status">{{ message }}</p>
+    {% elif message %}
+        <div class="approval-error" role="alert">
+            <p class="notification notification--error">{{ message }}</p>
+            {% if details %}<div class="approval-details">{{ details|linebreaksbr }}</div>{% endif %}
+        </div>
+    {% endif %}
+</div>
