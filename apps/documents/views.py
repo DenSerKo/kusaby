@@ -221,6 +221,23 @@ def events(request):
         "counterparty_kpp": counterparty_kpp_value,
         "is_pagination": bool(event_id),
     }
+
+    # Restore approval state from the database when the document list is
+    # rendered again (including after a full page reload).
+    document_ids = [event.get("id") for event in context["events"] if event.get("id")]
+    if document_ids:
+        connection = SabyConnection.objects.filter(user=request.user).first()
+        if connection:
+            approval_items = (
+                ApprovalItem.objects
+                .filter(connection=connection, document_id__in=document_ids)
+                .order_by("-created_at")
+            )
+            latest_by_document = {}
+            for approval_item in approval_items:
+                latest_by_document.setdefault(approval_item.document_id, approval_item)
+            for event in context["events"]:
+                event["approval_item"] = latest_by_document.get(event.get("id"))
     template = (
         "documents/partials/_events.html"
         if request.headers.get("HX-Request-Type") == "partial"
@@ -274,7 +291,8 @@ def approve_document(request):
             return render(request, "documents/partials/_approve_result.html", {
                 "queued": True,
                 "item_id": active_item.pk,
-                "message": "Утверждение этого документа уже выполняется.",
+                "message": "Запрос на подписание уже принят. Ожидаем результат от Saby.",
+                "document_id": document_id,
                 "details": None,
             }, status=202)
         raise
@@ -299,6 +317,7 @@ def approve_document(request):
         "queued": True,
         "item_id": item.pk,
         "message": "Задача утверждения поставлена в очередь. Результат появится после обработки.",
+        "document_id": document_id,
         "details": None,
     }, status=202)
 
@@ -316,6 +335,7 @@ def approval_status(request, item_id: int):
         context = {
             "queued": True,
             "item_id": item.pk,
+            "document_id": item.document_id,
             "message": (
                 "Задача находится в очереди."
                 if item.status == ApprovalItem.Status.QUEUED
@@ -327,12 +347,15 @@ def approval_status(request, item_id: int):
             "success": True,
             "message": item.message,
             "saby_url": item.saby_url,
+            "document_id": item.document_id,
         }
     elif item.status in (ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE):
         context = {
             "pending": True,
             "message": item.message,
             "saby_url": item.saby_url,
+            "document_id": item.document_id,
+            "overdue": item.status == ApprovalItem.Status.OVERDUE,
         }
     else:
         context = {
@@ -340,6 +363,7 @@ def approval_status(request, item_id: int):
             "message": item.message,
             "details": item.details,
             "saby_url": item.saby_url,
+            "document_id": item.document_id,
         }
 
     return render(
