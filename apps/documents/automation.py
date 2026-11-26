@@ -92,9 +92,8 @@ def process_approval_rule_task(run_id: int) -> None:
 
     try:
         criteria = run.criteria or {}
-        scan_from = rule.last_checked_at or (
-            rule.created_at - timedelta(minutes=5)
-        )
+        # Re-scan a small overlap to tolerate delayed visibility in Saby.
+        scan_from = (rule.last_checked_at or rule.created_at) - timedelta(minutes=5)
         amount_min = _parse_amount(criteria.get("amount_min"))
         amount_max = _parse_amount(criteria.get("amount_max"))
         if amount_min is not None and amount_max is not None and amount_min > amount_max:
