@@ -3,17 +3,16 @@
         <span class="approval-state{% if action_success %} approval-state--success{% endif %}">{{ action_label }}</span>
     </div>
 {% endif %}
-<div class="approval-feedback" id="approval-feedback-{{ document_id }}" aria-live="polite">
-    {% if queued or pending %}
-        <div
-            hx-get="{% url 'documents:approval-status' item_id %}"
-            hx-trigger="{% if queued %}every 2s{% else %}every 30s{% endif %}"
-            hx-swap="outerHTML">
-            <span class="text-muted">Проверяем результат подписания…</span>
-        </div>
-        {% if overdue %}
-            <p class="notification notification--error" role="status">{{ message }}</p>
-        {% endif %}
+<div class="approval-feedback" id="approval-feedback-{{ document_id }}" aria-live="polite"
+     {% if queued or pending %}
+         hx-get="{% url 'documents:approval-status' item_id %}"
+         hx-trigger="{% if queued %}every 2s{% elif overdue %}every 60s{% else %}every 30s{% endif %}"
+         hx-swap="outerHTML"
+     {% endif %}>
+    {% if queued %}
+        <p class="text-muted">Запрос обрабатывается…</p>
+    {% elif pending %}
+        <p class="notification{% if overdue %} notification--error{% endif %}" role="status">{{ message }}</p>
     {% elif success %}
         <p class="notification notification--success" role="status">{{ message }}</p>
     {% elif message %}
