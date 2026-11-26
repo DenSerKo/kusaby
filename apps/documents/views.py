@@ -234,8 +234,20 @@ def events(request):
                 .order_by("-created_at")
             )
             latest_by_document = {}
+            active_statuses = {
+                ApprovalItem.Status.QUEUED,
+                ApprovalItem.Status.RUNNING,
+                ApprovalItem.Status.PENDING,
+            }
             for approval_item in approval_items:
-                latest_by_document.setdefault(approval_item.document_id, approval_item)
+                current = latest_by_document.get(approval_item.document_id)
+                # An outstanding request must win over a later accidental
+                # duplicate attempt that Saby rejected.
+                if current is None or (
+                    approval_item.status in active_statuses
+                    and current.status not in active_statuses
+                ):
+                    latest_by_document[approval_item.document_id] = approval_item
             for event in context["events"]:
                 event["approval_item"] = latest_by_document.get(event.get("id"))
     template = (
