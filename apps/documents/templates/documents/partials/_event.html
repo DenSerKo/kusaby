@@ -25,7 +25,7 @@
         {% endif %}
     </div>
     <div class="amount"><p class="text-important">{{ event.amount }}</p></div>
-    <div class="action">
+    <div class="action" id="approval-action-{{ event.id }}">
         {% if event.approval_item %}
             {% with approval=event.approval_item %}
                 {% if approval.status == "pending" or approval.status == "queued" or approval.status == "running" %}
@@ -60,7 +60,7 @@
                 {% endif %}
             {% endwith %}
         {% else %}
-            <form hx-post="{% url 'documents:approve-document' %}" hx-target="#approval-feedback-{{ event.id }}" hx-swap="innerHTML">
+            <form hx-post="{% url 'documents:approve-document' %}" hx-target="this" hx-swap="innerHTML">
                 {% csrf_token %}
                 <input type="hidden" name="document_id" value="{{ event.id }}">
                 <button type="submit">Утвердить</button>
