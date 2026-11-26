@@ -18,7 +18,10 @@
         {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
     </div>
 {% elif overdue %}
-    <div class="approval-overdue" role="status">
+    <div class="approval-overdue" role="status"
+         hx-get="{% url 'documents:approval-status' item_id %}"
+         hx-trigger="every 60s"
+         hx-swap="outerHTML">
         <p class="notification notification--error">{{ message }}</p>
         {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
     </div>
