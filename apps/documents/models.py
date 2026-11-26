@@ -25,6 +25,7 @@ class ApprovalRule(models.Model):
     criteria = models.JSONField(default=dict, blank=True)
     next_run_at = models.DateTimeField(default=timezone.now)
     last_run_at = models.DateTimeField(null=True, blank=True)
+    last_checked_at = models.DateTimeField(null=True, blank=True)
     last_error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
