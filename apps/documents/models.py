@@ -17,7 +17,7 @@ class ApprovalRule(models.Model):
         related_name="approval_rules",
     )
     name = models.CharField(max_length=100)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     interval_minutes = models.PositiveSmallIntegerField(
         choices=Interval.choices,
         default=Interval.FIVE_MINUTES,
