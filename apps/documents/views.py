@@ -311,6 +311,7 @@ def approve_document(request):
                 "item_id": active_item.pk,
                 "message": "Запрос на подписание уже принят. Ожидаем результат от Saby.",
                 "document_id": document_id,
+                "action_label": "Отправлено на подписание",
                 "details": None,
             }, status=202)
         raise
@@ -336,6 +337,7 @@ def approve_document(request):
         "item_id": item.pk,
         "message": "Задача утверждения поставлена в очередь. Результат появится после обработки.",
         "document_id": document_id,
+        "action_label": "Отправлено на подписание",
         "details": None,
     }, status=202)
 
@@ -366,6 +368,7 @@ def approval_status(request, item_id: int):
             "queued": True,
             "item_id": item.pk,
             "document_id": item.document_id,
+            "action_label": "Отправлено на подписание",
             "message": (
                 "Задача находится в очереди."
                 if item.status == ApprovalItem.Status.QUEUED
@@ -376,16 +379,17 @@ def approval_status(request, item_id: int):
         context = {
             "success": True,
             "message": item.message,
-            "saby_url": item.saby_url,
             "document_id": item.document_id,
+            "action_label": "Подписан",
+            "action_success": True,
         }
     elif item.status in (ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE):
         context = {
             "pending": True,
             "item_id": item.pk,
             "message": item.message,
-            "saby_url": item.saby_url,
             "document_id": item.document_id,
+            "action_label": "Отправлено на подписание",
             "overdue": item.status == ApprovalItem.Status.OVERDUE,
         }
     else:
@@ -393,8 +397,12 @@ def approval_status(request, item_id: int):
             "success": False,
             "message": item.message,
             "details": item.details,
-            "saby_url": item.saby_url,
             "document_id": item.document_id,
+            "action_label": (
+                "Не удалось отправить"
+                if item.status == ApprovalItem.Status.FAILED
+                else "Требует проверки"
+            ),
         }
 
     return render(
