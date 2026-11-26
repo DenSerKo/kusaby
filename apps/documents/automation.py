@@ -82,6 +82,9 @@ def process_approval_rule_task(run_id: int) -> None:
         .get(pk=run_id)
     )
     rule = run.rule
+    run.status = ApprovalRun.Status.RUNNING
+    run.started_at = run.started_at or timezone.now()
+    run.save(update_fields=["status", "started_at"])
     if rule is None or run.connection is None:
         _fail_rule_run(run, "Правило или подключение Saby больше недоступно.")
         return
