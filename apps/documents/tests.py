@@ -7,6 +7,8 @@ from django.test import SimpleTestCase, TestCase
 from apps.accounts.models import SabyConnection
 
 from .automation import _parse_amount
+from .models import ApprovalItem, ApprovalRule, ApprovalRun
+from .tasks import _refresh_run_status
 from .filters import (
     EventsFilter,
     filter_documents,
@@ -169,10 +171,6 @@ class SabyDocumentLinkTests(SimpleTestCase):
             parse_document(document)["saby_url"],
             "https://online.saby.ru/doc/2",
         )
-
-
-from .models import ApprovalItem, ApprovalRule, ApprovalRun
-from .tasks import _refresh_run_status
 
 
 class ApprovalAutomationModelTests(TestCase):
