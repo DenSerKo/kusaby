@@ -208,7 +208,6 @@ def approve_document_task(item_id: int) -> None:
 
 
 def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
-    now = timezone.now()
     with transaction.atomic():
         item = ApprovalItem.objects.select_related("run").get(pk=item_id)
         item.status = status
@@ -351,3 +350,7 @@ def _sync_connection_events(connection, overdue_after) -> None:
         ):
             break
 
+
+
+# Import periodic tasks so Huey discovers and registers them with this app.
+from apps.documents.automation import dispatch_approval_rules, process_approval_rule_task  # noqa: E402,F401
