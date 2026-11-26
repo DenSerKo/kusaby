@@ -42,7 +42,10 @@
                         </p>
                     </div>
                 {% elif approval.status == "overdue" %}
-                    <div class="approval-overdue">
+                    <div class="approval-overdue"
+                         hx-get="{% url 'documents:approval-status' approval.pk %}"
+                         hx-trigger="load, every 60s"
+                         hx-swap="outerHTML">
                         <p class="notification notification--error" role="status">Не подтверждено за отведённое время</p>
                         <a href="{% url 'documents:approvals' %}">Проверить результат</a>
                         {% if approval.saby_url %}
