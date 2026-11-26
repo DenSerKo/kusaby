@@ -1,6 +1,39 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
+
+
+class ApprovalRule(models.Model):
+    class Interval(models.IntegerChoices):
+        FIVE_MINUTES = 5, "Каждые 5 минут"
+        FIFTEEN_MINUTES = 15, "Каждые 15 минут"
+        THIRTY_MINUTES = 30, "Каждые 30 минут"
+        SIXTY_MINUTES = 60, "Каждый час"
+
+    connection = models.ForeignKey(
+        "accounts.SabyConnection",
+        on_delete=models.CASCADE,
+        related_name="approval_rules",
+    )
+    name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    interval_minutes = models.PositiveSmallIntegerField(
+        choices=Interval.choices,
+        default=Interval.FIVE_MINUTES,
+    )
+    criteria = models.JSONField(default=dict, blank=True)
+    next_run_at = models.DateTimeField(default=timezone.now)
+    last_run_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("created_at",)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class ApprovalRun(models.Model):
@@ -25,6 +58,13 @@ class ApprovalRun(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="approval_runs",
+    )
+    rule = models.ForeignKey(
+        ApprovalRule,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="runs",
     )
     trigger = models.CharField(max_length=16, choices=Trigger.choices)
     status = models.CharField(
