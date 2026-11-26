@@ -164,3 +164,121 @@ class SabyDocumentLinkTests(SimpleTestCase):
             parse_document(document)["saby_url"],
             "https://online.saby.ru/doc/2",
         )
+
+
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
+from django.test import TestCase
+
+from apps.accounts.models import SabyConnection
+from .models import ApprovalItem, ApprovalRule, ApprovalRun
+from .tasks import _refresh_run_status
+
+
+class ApprovalAutomationModelTests(TestCase):
+    def setUp(self):
+        user = get_user_model().objects.create_user(
+            username="automation-test",
+            password="test-password",
+        )
+        self.connection = SabyConnection.objects.create(
+            user=user,
+            encrypted_access_token="encrypted-test-token",
+        )
+        self.rule = ApprovalRule.objects.create(
+            connection=self.connection,
+            name="Test rule",
+        )
+        self.run = ApprovalRun.objects.create(
+            user=user,
+            connection=self.connection,
+            rule=self.rule,
+            trigger=ApprovalRun.Trigger.AUTOMATIC,
+            criteria={},
+        )
+
+    def test_rule_is_disabled_by_default(self):
+        self.assertFalse(self.rule.is_active)
+        self.assertEqual(
+            self.rule.interval_minutes,
+            ApprovalRule.Interval.FIVE_MINUTES,
+        )
+
+    def test_database_prevents_duplicate_document_for_same_rule(self):
+        ApprovalItem.objects.create(
+            run=self.run,
+            rule=self.rule,
+            connection=self.connection,
+            document_id="document-1",
+        )
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ApprovalItem.objects.create(
+                run=self.run,
+                rule=self.rule,
+                connection=self.connection,
+                document_id="document-1",
+            )
+
+    def test_different_rules_can_track_the_same_document(self):
+        other_rule = ApprovalRule.objects.create(
+            connection=self.connection,
+            name="Another rule",
+        )
+        other_run = ApprovalRun.objects.create(
+            user=self.run.user,
+            connection=self.connection,
+            rule=other_rule,
+            trigger=ApprovalRun.Trigger.AUTOMATIC,
+        )
+        ApprovalItem.objects.create(
+            run=self.run,
+            rule=self.rule,
+            connection=self.connection,
+            document_id="document-1",
+        )
+        other_item = ApprovalItem.objects.create(
+            run=other_run,
+            rule=other_rule,
+            connection=self.connection,
+            document_id="document-1",
+        )
+        self.assertEqual(other_item.document_id, "document-1")
+
+    def test_run_status_waits_for_all_items(self):
+        pending = ApprovalItem.objects.create(
+            run=self.run,
+            connection=self.connection,
+            document_id="document-pending",
+            status=ApprovalItem.Status.PENDING,
+        )
+        ApprovalItem.objects.create(
+            run=self.run,
+            connection=self.connection,
+            document_id="document-queued",
+            status=ApprovalItem.Status.QUEUED,
+        )
+
+        _refresh_run_status(self.run.pk)
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.status, ApprovalRun.Status.RUNNING)
+
+        ApprovalItem.objects.filter(pk=pending.pk).update(
+            status=ApprovalItem.Status.SUCCEEDED,
+        )
+        ApprovalItem.objects.filter(
+            run=self.run,
+            document_id="document-queued",
+        ).update(status=ApprovalItem.Status.PENDING)
+
+        _refresh_run_status(self.run.pk)
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.status, ApprovalRun.Status.PENDING)
+
+        ApprovalItem.objects.filter(
+            run=self.run,
+            document_id="document-queued",
+        ).update(status=ApprovalItem.Status.SUCCEEDED)
+
+        _refresh_run_status(self.run.pk)
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.status, ApprovalRun.Status.COMPLETED)
