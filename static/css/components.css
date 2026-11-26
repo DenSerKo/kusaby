@@ -186,6 +186,18 @@ form {
         form {
             margin: 0;
         }
+
+        .approval-state {
+            display: inline-block;
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+
+        .approval-state--success {
+            color: var(--color-success);
+        }
     }
 
     .approval-feedback {
