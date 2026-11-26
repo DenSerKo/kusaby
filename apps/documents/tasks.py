@@ -31,9 +31,10 @@ def approve_document_task(item_id: int) -> None:
 
         item.status = ApprovalItem.Status.RUNNING
         item.save(update_fields=["status", "updated_at"])
-        item.run.status = ApprovalRun.Status.RUNNING
-        item.run.started_at = timezone.now()
-        item.run.save(update_fields=["status", "started_at"])
+        if item.run.started_at is None:
+            item.run.started_at = timezone.now()
+            item.run.save(update_fields=["started_at"])
+        _refresh_run_status(item.run_id)
 
     try:
         certificate_inn = settings.SABY_APPROVAL_CERTIFICATE_INN
@@ -203,8 +204,7 @@ def approve_document_task(item_id: int) -> None:
         item.message = "Saby принял запрос. Ожидаем подтверждения подписания."
         item.details = ""
         item.save(update_fields=["status", "accepted_at", "message", "details", "updated_at"])
-        item.run.status = ApprovalRun.Status.PENDING
-        item.run.save(update_fields=["status"])
+        _refresh_run_status(item.run_id)
 
 
 def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
@@ -216,18 +216,37 @@ def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
         item.details = details[:4000]
         item.save(update_fields=["status", "message", "details", "saby_url", "updated_at"])
 
-        if status == ApprovalItem.Status.PENDING:
-            item.run.status = ApprovalRun.Status.PENDING
-            item.run.finished_at = None
-            item.run.save(update_fields=["status", "finished_at"])
-        else:
-            item.run.status = (
-                ApprovalRun.Status.COMPLETED
-                if status == ApprovalItem.Status.SUCCEEDED
-                else ApprovalRun.Status.FAILED
-            )
-            item.run.finished_at = now
-            item.run.save(update_fields=["status", "finished_at"])
+        _refresh_run_status(item.run_id)
+
+
+def _refresh_run_status(run_id: int) -> None:
+    """Пересчитывает состояние запуска по всем его документам."""
+    statuses = list(
+        ApprovalItem.objects
+        .filter(run_id=run_id)
+        .values_list("status", flat=True)
+    )
+    if any(status in (ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING) for status in statuses):
+        status = ApprovalRun.Status.RUNNING
+    elif any(status in (ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE) for status in statuses):
+        status = ApprovalRun.Status.PENDING
+    elif any(status in (ApprovalItem.Status.FAILED, ApprovalItem.Status.UNKNOWN) for status in statuses):
+        status = ApprovalRun.Status.FAILED
+    else:
+        status = ApprovalRun.Status.COMPLETED
+
+    run = ApprovalRun.objects.get(pk=run_id)
+    run.status = status
+    run.finished_at = (
+        timezone.now()
+        if status in (ApprovalRun.Status.COMPLETED, ApprovalRun.Status.FAILED)
+        else None
+    )
+    update_fields = ["status", "finished_at"]
+    if status != ApprovalRun.Status.QUEUED and run.started_at is None:
+        run.started_at = timezone.now()
+        update_fields.append("started_at")
+    run.save(update_fields=update_fields)
 
 
 @db_periodic_task(crontab(minute="*/5"))
@@ -308,9 +327,7 @@ def _sync_connection_events(connection, overdue_after) -> None:
                 item.message = "Документ успешно подписан в Saby."
                 item.details = ""
                 item.save(update_fields=["status", "message", "details", "saby_url", "updated_at"])
-                item.run.status = ApprovalRun.Status.COMPLETED
-                item.run.finished_at = timezone.now()
-                item.run.save(update_fields=["status", "finished_at"])
+                _refresh_run_status(item.run_id)
 
         next_cursor = page["cursor"]
         if next_cursor["event_id"] and next_cursor["event_datetime"] and next_cursor["document_id"]:
