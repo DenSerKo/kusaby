@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 
 import httpx
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, render
@@ -342,6 +343,18 @@ def approval_status(request, item_id: int):
         pk=item_id,
         run__user=request.user,
     )
+
+    # Keep the user-facing timeout accurate even if the periodic Huey task
+    # has not run yet (or the worker is temporarily unavailable).
+    timeout = timedelta(minutes=settings.SABY_APPROVAL_TIMEOUT_MINUTES)
+    if (
+        item.status == ApprovalItem.Status.PENDING
+        and item.accepted_at
+        and item.accepted_at <= timezone.now() - timeout
+    ):
+        item.status = ApprovalItem.Status.OVERDUE
+        item.message = "Saby пока не подтвердил подписание за отведённое время. Проверьте документ в Saby."
+        item.save(update_fields=["status", "message", "updated_at"])
 
     if item.status in (ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING):
         context = {
