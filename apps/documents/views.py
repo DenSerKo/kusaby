@@ -352,6 +352,7 @@ def approval_status(request, item_id: int):
     elif item.status in (ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE):
         context = {
             "pending": True,
+            "item_id": item.pk,
             "message": item.message,
             "saby_url": item.saby_url,
             "document_id": item.document_id,
