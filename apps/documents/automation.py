@@ -157,8 +157,23 @@ def process_approval_rule_task(run_id: int) -> None:
                     )
                 new_items.append(item)
             except IntegrityError:
-                # Another manual/automatic run may already be processing it.
-                continue
+                # Ignore only known deduplication conflicts; surface other DB errors.
+                already_tracked = ApprovalItem.objects.filter(
+                    rule=rule,
+                    document_id=document["id"],
+                ).exists()
+                actively_processing = ApprovalItem.objects.filter(
+                    connection=run.connection,
+                    document_id=document["id"],
+                    status__in=(
+                        ApprovalItem.Status.QUEUED,
+                        ApprovalItem.Status.RUNNING,
+                        ApprovalItem.Status.PENDING,
+                    ),
+                ).exists()
+                if already_tracked or actively_processing:
+                    continue
+                raise
 
         now = timezone.now()
         ApprovalRule.objects.filter(pk=rule.pk).update(
