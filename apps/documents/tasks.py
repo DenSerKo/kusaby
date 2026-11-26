@@ -220,32 +220,42 @@ def _finish_item(item_id: int, status: str, message: str, details: str) -> None:
 
 def _refresh_run_status(run_id: int) -> None:
     """Пересчитывает состояние запуска по всем его документам."""
-    statuses = list(
-        ApprovalItem.objects
-        .filter(run_id=run_id)
-        .values_list("status", flat=True)
-    )
-    if any(status in (ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING) for status in statuses):
-        status = ApprovalRun.Status.RUNNING
-    elif any(status in (ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE) for status in statuses):
-        status = ApprovalRun.Status.PENDING
-    elif any(status in (ApprovalItem.Status.FAILED, ApprovalItem.Status.UNKNOWN) for status in statuses):
-        status = ApprovalRun.Status.FAILED
-    else:
-        status = ApprovalRun.Status.COMPLETED
+    with transaction.atomic():
+        run = ApprovalRun.objects.select_for_update().get(pk=run_id)
+        statuses = list(
+            ApprovalItem.objects
+            .filter(run_id=run_id)
+            .values_list("status", flat=True)
+        )
+        if any(
+            status in (ApprovalItem.Status.QUEUED, ApprovalItem.Status.RUNNING)
+            for status in statuses
+        ):
+            status = ApprovalRun.Status.RUNNING
+        elif any(
+            status in (ApprovalItem.Status.PENDING, ApprovalItem.Status.OVERDUE)
+            for status in statuses
+        ):
+            status = ApprovalRun.Status.PENDING
+        elif any(
+            status in (ApprovalItem.Status.FAILED, ApprovalItem.Status.UNKNOWN)
+            for status in statuses
+        ):
+            status = ApprovalRun.Status.FAILED
+        else:
+            status = ApprovalRun.Status.COMPLETED
 
-    run = ApprovalRun.objects.get(pk=run_id)
-    run.status = status
-    run.finished_at = (
-        timezone.now()
-        if status in (ApprovalRun.Status.COMPLETED, ApprovalRun.Status.FAILED)
-        else None
-    )
-    update_fields = ["status", "finished_at"]
-    if status != ApprovalRun.Status.QUEUED and run.started_at is None:
-        run.started_at = timezone.now()
-        update_fields.append("started_at")
-    run.save(update_fields=update_fields)
+        run.status = status
+        run.finished_at = (
+            timezone.now()
+            if status in (ApprovalRun.Status.COMPLETED, ApprovalRun.Status.FAILED)
+            else None
+        )
+        update_fields = ["status", "finished_at"]
+        if run.started_at is None:
+            run.started_at = timezone.now()
+            update_fields.append("started_at")
+        run.save(update_fields=update_fields)
 
 
 @db_periodic_task(crontab(minute="*/5"))
