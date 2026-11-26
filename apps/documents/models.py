@@ -94,6 +94,13 @@ class ApprovalItem(models.Model):
         on_delete=models.CASCADE,
         related_name="items",
     )
+    rule = models.ForeignKey(
+        ApprovalRule,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="items",
+    )
     connection = models.ForeignKey(
         "accounts.SabyConnection",
         on_delete=models.SET_NULL,
@@ -120,6 +127,11 @@ class ApprovalItem(models.Model):
                 fields=("connection", "document_id"),
                 condition=Q(status__in=("queued", "running", "pending")),
                 name="unique_active_approval_per_document",
+            ),
+            models.UniqueConstraint(
+                fields=("rule", "document_id"),
+                condition=Q(rule__isnull=False),
+                name="unique_rule_approval_per_document",
             ),
         ]
 
