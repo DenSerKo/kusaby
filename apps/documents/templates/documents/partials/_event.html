@@ -46,14 +46,11 @@
             </form>
         {% endif %}
     </div>
-    <div class="approval-feedback" id="approval-feedback-{{ event.id }}" aria-live="polite">
-        {% if event.approval_item %}
-            <div
-                hx-get="{% url 'documents:approval-status' event.approval_item.pk %}"
-                hx-trigger="load, every 30s"
-                hx-swap="outerHTML">
-                <span class="text-muted"> </span>
-            </div>
-        {% endif %}
+    <div class="approval-feedback" id="approval-feedback-{{ event.id }}" aria-live="polite"
+         {% if event.approval_item and event.approval_item.status != "succeeded" and event.approval_item.status != "failed" and event.approval_item.status != "unknown" %}
+             hx-get="{% url 'documents:approval-status' event.approval_item.pk %}"
+             hx-trigger="load, every 30s"
+             hx-swap="outerHTML"
+         {% endif %}>
     </div>
 </article>
