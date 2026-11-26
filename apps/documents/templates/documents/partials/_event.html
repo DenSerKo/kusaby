@@ -47,9 +47,9 @@
         {% endif %}
     </div>
     <div class="approval-feedback" id="approval-feedback-{{ event.id }}" aria-live="polite"
-         {% if event.approval_item and event.approval_item.status != "succeeded" and event.approval_item.status != "failed" and event.approval_item.status != "unknown" %}
+         {% if event.approval_item and event.approval_item.status != "succeeded" %}
              hx-get="{% url 'documents:approval-status' event.approval_item.pk %}"
-             hx-trigger="load, every 30s"
+             hx-trigger="load{% if event.approval_item.status == 'queued' or event.approval_item.status == 'running' or event.approval_item.status == 'pending' or event.approval_item.status == 'overdue' %}, every 30s{% endif %}"
              hx-swap="outerHTML"
          {% endif %}>
     </div>
