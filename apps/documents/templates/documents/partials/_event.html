@@ -27,48 +27,33 @@
     <div class="amount"><p class="text-important">{{ event.amount }}</p></div>
     <div class="action" id="approval-action-{{ event.id }}">
         {% if event.approval_item %}
-            {% with approval=event.approval_item %}
-                {% if approval.status == "pending" or approval.status == "queued" or approval.status == "running" %}
-                    <div class="approval-pending"
-                         hx-get="{% url 'documents:approval-status' approval.pk %}"
-                         hx-trigger="load, every 30s"
-                         hx-swap="outerHTML">
-                        <p class="notification" role="status">
-                            {% if approval.status == "pending" %}
-                                Ожидает подписания в Saby
-                            {% else %}
-                                Запрос обрабатывается
-                            {% endif %}
-                        </p>
-                    </div>
-                {% elif approval.status == "overdue" %}
-                    <div class="approval-overdue"
-                         hx-get="{% url 'documents:approval-status' approval.pk %}"
-                         hx-trigger="load, every 60s"
-                         hx-swap="outerHTML">
-                        <p class="notification notification--error" role="status">Не подтверждено за отведённое время</p>
-                        <a href="{% url 'documents:approvals' %}">Проверить результат</a>
-                        {% if approval.saby_url %}
-                            <a href="{{ approval.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть в Saby</a>
-                        {% endif %}
-                    </div>
-                {% elif approval.status == "succeeded" %}
-                    <p class="notification notification--success" role="status">Подписан</p>
-                {% elif approval.status == "unknown" %}
-                    <p class="notification notification--error" role="status">Результат требует проверки</p>
-                    {% if approval.saby_url %}<a href="{{ approval.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть в Saby</a>{% endif %}
-                {% elif approval.status == "failed" %}
-                    <p class="notification notification--error" role="status">Saby отклонил запрос</p>
-                    {% if approval.saby_url %}<a href="{{ approval.saby_url }}" target="_blank" rel="noopener noreferrer">Открыть в Saby</a>{% endif %}
-                {% endif %}
-            {% endwith %}
+            {% if event.approval_item.status == "succeeded" %}
+                <span class="approval-state approval-state--success">Подписан</span>
+            {% elif event.approval_item.status == "failed" %}
+                <span class="approval-state">Запрос не выполнен</span>
+            {% elif event.approval_item.status == "unknown" %}
+                <span class="approval-state">Требует проверки</span>
+            {% else %}
+                <span class="approval-state">Отправлено на подписание</span>
+            {% endif %}
         {% else %}
-            <form hx-post="{% url 'documents:approve-document' %}" hx-target="#approval-action-{{ event.id }}" hx-swap="innerHTML">
+            <form hx-post="{% url 'documents:approve-document' %}"
+                  hx-target="#approval-feedback-{{ event.id }}"
+                  hx-swap="outerHTML">
                 {% csrf_token %}
                 <input type="hidden" name="document_id" value="{{ event.id }}">
                 <button type="submit">Утвердить</button>
             </form>
         {% endif %}
     </div>
-    <div class="approval-feedback" id="approval-feedback-{{ event.id }}" aria-live="polite"></div>
+    <div class="approval-feedback" id="approval-feedback-{{ event.id }}" aria-live="polite">
+        {% if event.approval_item %}
+            <div
+                hx-get="{% url 'documents:approval-status' event.approval_item.pk %}"
+                hx-trigger="load, every 30s"
+                hx-swap="outerHTML">
+                <span class="text-muted"> </span>
+            </div>
+        {% endif %}
+    </div>
 </article>
