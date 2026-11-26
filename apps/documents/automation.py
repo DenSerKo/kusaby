@@ -11,7 +11,6 @@ from huey.contrib.djhuey import db_periodic_task, db_task
 from apps.documents.filters import EventsFilter
 from apps.documents.models import ApprovalItem, ApprovalRule, ApprovalRun
 from apps.documents.services import get_events
-from apps.documents.tasks import approve_document_task, _refresh_run_status
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +75,8 @@ def dispatch_approval_rules() -> None:
 @db_task()
 def process_approval_rule_task(run_id: int) -> None:
     """Ищет документы по снимку критериев правила и ставит их на утверждение."""
+    from apps.documents.tasks import approve_document_task, _refresh_run_status
+
     run = (
         ApprovalRun.objects
         .select_related("rule", "connection")
