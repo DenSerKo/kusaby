@@ -63,7 +63,7 @@
                 {% endif %}
             {% endwith %}
         {% else %}
-            <form hx-post="{% url 'documents:approve-document' %}" hx-target="this" hx-swap="innerHTML">
+            <form hx-post="{% url 'documents:approve-document' %}" hx-target="#approval-action-{{ event.id }}" hx-swap="innerHTML">
                 {% csrf_token %}
                 <input type="hidden" name="document_id" value="{{ event.id }}">
                 <button type="submit">Утвердить</button>
