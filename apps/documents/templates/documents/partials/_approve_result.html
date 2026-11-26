@@ -7,9 +7,19 @@
     >
         <p class="notification" role="status">{{ message }}</p>
     </div>
-{% elif pending %}
-    <div class="notification" role="status">
-        <p>{{ message }}</p>
+{% elif pending and not overdue %}
+    <div
+        class="approval-pending"
+        hx-get="{% url 'documents:approval-status' item_id %}"
+        hx-trigger="every 30s"
+        hx-swap="outerHTML"
+    >
+        <p class="notification" role="status">{{ message }}</p>
+        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
+    </div>
+{% elif overdue %}
+    <div class="approval-overdue" role="status">
+        <p class="notification notification--error">{{ message }}</p>
         {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
     </div>
 {% elif success %}
@@ -21,5 +31,6 @@
     <div class="approval-error" role="alert">
         <p class="notification notification--error">{{ message }}</p>
         {% if details %}<div class="approval-details">{{ details|linebreaksbr }}</div>{% endif %}
+        {% if saby_url %}<a href="{{ saby_url }}" target="_blank" rel="noopener noreferrer">Открыть документ в Saby</a>{% endif %}
     </div>
 {% endif %}
